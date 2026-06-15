@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposal</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;}
+  #scld{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#EDE9E3;
+    font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:13px;letter-spacing:.12em;
+    text-transform:uppercase;color:rgba(0,0,0,0.45);text-align:center;padding:24px;line-height:1.7;z-index:10;}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<div id="scld">Loading proposal&hellip;</div>
+<script>
+(function(){
+  var CFG={apiKey:"AIzaSyBBx2xU_3tvcw0A2aIs0iNEnJrilvlHN2w",authDomain:"sc-timelines.firebaseapp.com",projectId:"sc-timelines",storageBucket:"sc-timelines.firebasestorage.app",messagingSenderId:"653446187626",appId:"1:653446187626:web:8b0c84fd5808b112941813"};
+  function msg(t){ var l=document.getElementById('scld'); if(l) l.textContent=t; }
+  if(typeof firebase==='undefined'){ msg('Could not load (scripts may be blocked). Try another browser or reload.'); return; }
+  try{ if(!firebase.apps||!firebase.apps.length) firebase.initializeApp(CFG); }catch(e){}
+  var db; try{ db=firebase.firestore(); }catch(e){ msg('Viewer error: '+((e&&e.message)||e)); return; }
+  var id=new URLSearchParams(location.search).get('id');
+  if(!id){ msg('No proposal specified.'); return; }
+  function render(html){ if(!html){ msg('This proposal is empty.'); return; } document.open(); document.write(html); document.close(); }
+  var ref=db.collection('public_proposals').doc(id);
+  ref.get().then(function(s){
+    if(!s.exists){ msg('This proposal link is no longer available.'); return; }
+    var v=s.data()||{}; var n=v.chunks||0;
+    if(!n){ render(v.html||''); return; }
+    ref.collection('parts').orderBy('seq').get().then(function(ps){
+      var str=''; ps.forEach(function(d){ str+=(d.data().data||''); }); render(str);
+    }).catch(function(e){ msg('Could not load this proposal: '+((e&&e.message)||e)); });
+  }).catch(function(e){ msg('Could not load this proposal: '+((e&&e.message)||e)); });
+})();
+</script>
+</body>
+</html>

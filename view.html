@@ -2038,8 +2038,8 @@ function getShareLink(){
   var state=snapState();
   var client=document.getElementById('client-name').textContent.trim();
   showShareLink('', true, false);
-  brokerCall('sc-publish',{state:state,client:client}).then(function(id){
-    var url=SC_VIEWER_BASE+'?id='+id;
+  brokerCall('sc-publish',{state:state,client:client}).then(function(res){
+    var url=(res&&res.url)?res.url:(SC_VIEWER_BASE+'?id='+res);
     showShareLink(url, false, false);
     if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).catch(function(){});}
   }).catch(function(err){ showShareLink((err&&err.message)||String(err), false, true); });

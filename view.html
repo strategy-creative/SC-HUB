@@ -377,8 +377,9 @@ body.readonly .bar:hover{outline:none;}
   display:flex;align-items:center;justify-content:center;
 }
 .overlay.hidden{display:none;}
-/* Bar/text edit popup: no blur + see-through backdrop so the timeline stays visible while editing */
-#bar-overlay{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
+/* Bar/text edit popup: slight dark dim (like the Proposals Library), no blur, so
+   the timeline stays clearly visible while editing but it's obvious a panel opened */
+#bar-overlay{background:rgba(0,0,0,0.45);backdrop-filter:none;-webkit-backdrop-filter:none;}
 .popup{background:var(--white);border:1px solid rgba(0,0,0,0.07);border-radius:12px;padding:32px;box-shadow:0 16px 60px rgba(0,0,0,0.1);}
 .popup-title{font-family:var(--normal);font-size:18px;letter-spacing:-0.01em;color:var(--t-primary);margin-bottom:22px;line-height:1;}
 .field{margin-bottom:14px;}

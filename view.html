@@ -28,8 +28,8 @@
   --header-h:62px;
   --toolbar-h:46px;
   --col-h:52px;
-  --row-h:58px;
-  --group-h:46px;
+  --row-h:38px;
+  --group-h:32px;
   --sidebar-w:260px;
   --footer-h:38px;
 
@@ -53,7 +53,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bw);color:var(
 .hub-header-left{display:flex;align-items:center;}
 .hub-title{font-family:var(--normal);font-size:20px;letter-spacing:-0.01em;color:var(--t-primary);line-height:1;}
 .hub-wordmark{display:flex;align-items:center;justify-content:center;line-height:0;}
-.hub-header-right{display:flex;align-items:center;gap:20px;justify-content:flex-end;}
+.hub-header-right{display:flex;align-items:baseline;gap:20px;justify-content:flex-end;}
 .hub-client-input{
   font-family:var(--mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;
   color:var(--t-secondary);
@@ -141,10 +141,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bw);color:var(
   font-family:var(--mono);font-size:11px;letter-spacing:0.14em;
   text-transform:uppercase;color:var(--t-secondary);
 }
-.sidebar-rows{flex:1;overflow-y:auto;overflow-x:hidden;}
-.sidebar-rows::-webkit-scrollbar{width:12px;}
-.sidebar-rows::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.22);border-radius:6px;border:3px solid var(--white);background-clip:padding-box;min-height:40px;}
-.sidebar-rows::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,0.4);background-clip:padding-box;}
+.sidebar-rows{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none;}
+.sidebar-rows::-webkit-scrollbar{width:0;height:0;display:none;}
+/* Resizable Phases & Tasks column */
+.sidebar-resizer{position:absolute;top:0;bottom:0;left:var(--sidebar-w);width:7px;transform:translateX(-3px);cursor:col-resize;z-index:150;}
+.sidebar-resizer:hover,.sidebar-resizer.dragging{background:rgba(149,0,255,0.16);}
+body.readonly .sidebar-resizer{display:none;}
 
 /* ═══════════════════════════════════════════════════════════════════
    GRID AREA
@@ -271,6 +273,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bw);color:var(
   cursor:text;border-bottom:1px solid transparent;transition:color 0.12s,border-color 0.12s;
 }
 .row-name:focus{color:var(--t-primary);border-bottom-color:rgba(149,0,255,0.35);}
+/* Placeholder text for empty phase/task names (blank start) */
+.grp-name:empty:before{content:attr(data-ph);color:rgba(255,255,255,0.5);pointer-events:none;}
+.group-item.light-bg .grp-name:empty:before{color:rgba(0,0,0,0.32);}
+.row-name:empty:before{content:attr(data-ph);color:rgba(0,0,0,0.3);pointer-events:none;}
 .row-actions{display:none;gap:3px;align-items:center;flex-shrink:0;}
 .row-item:hover .row-actions{display:flex;}
 .ra-btn{
@@ -292,7 +298,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bw);color:var(
 ═══════════════════════════════════════════════════════════════════ */
 .bar{
   position:absolute;border-radius:4px;cursor:grab;z-index:10;
-  overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.14);
+  overflow:visible;box-shadow:0 1px 3px rgba(0,0,0,0.14);
   transition:box-shadow 0.12s;user-select:none;
 }
 .bar:hover{box-shadow:0 2px 10px rgba(0,0,0,0.2);}
@@ -304,6 +310,36 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bw);color:var(
 .bar-handle{position:absolute;top:0;bottom:0;width:10px;z-index:2;cursor:col-resize;}
 .bar-handle.left{left:0;}
 .bar-handle.right{right:0;}
+/* Inline bar editing + hover outline + edit icon */
+.bar:hover{outline:1.5px solid rgba(149,0,255,0.6);outline-offset:1px;}
+.bar-emoji{font-size:12px;padding-left:8px;pointer-events:none;flex-shrink:0;line-height:1;}
+.bar-label.editing{pointer-events:auto;cursor:text;outline:none;background:rgba(255,255,255,0.22);border-radius:3px;}
+.bar-label.dark.editing{background:rgba(0,0,0,0.07);}
+.bar-edit-btn{position:absolute;top:-9px;right:-9px;width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,0.12);background:#fff;color:rgba(0,0,0,0.55);font-size:10px;line-height:1;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:25;box-shadow:0 1px 4px rgba(0,0,0,0.2);padding:0;}
+.bar:hover .bar-edit-btn{display:flex;}
+.bar-edit-btn:hover{color:var(--pp);border-color:rgba(149,0,255,0.4);}
+body.readonly .bar:hover{outline:none;}
+.grp-name[contenteditable="false"],.row-name[contenteditable="false"]{cursor:inherit;}
+/* Per-phase day chips (sidebar headers) + project total (column header) */
+.grp-days{font-family:var(--mono);font-size:8.5px;letter-spacing:0.06em;padding:3px 8px;border-radius:10px;background:rgba(0,0,0,0.10);cursor:pointer;flex-shrink:0;white-space:nowrap;transition:transform .1s;}
+.grp-days:hover{transform:scale(1.08);}
+.group-item.light-bg .grp-days{color:rgba(0,0,0,0.6);}
+.group-item:not(.light-bg) .grp-days{color:rgba(255,255,255,0.85);background:rgba(0,0,0,0.22);}
+.group-item.gdone .grp-name{text-decoration:line-through;opacity:0.65;}
+.sidebar-total{flex-shrink:0;display:flex;justify-content:space-between;align-items:center;height:36px;padding:0 20px 0 22px;font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--t-secondary);background:var(--white);border-top:1px solid var(--border);}
+.sidebar-total b{font-weight:700;color:var(--t-primary);letter-spacing:0.06em;}
+/* Milestone emoji legend (bottom-left key) */
+.ms-legend{position:fixed;right:90px;bottom:50px;z-index:60;background:rgba(255,255,255,0.97);border:1px solid var(--border);border-radius:8px;padding:10px 13px;box-shadow:0 4px 18px rgba(0,0,0,0.1);width:280px;min-width:190px;max-width:520px;}
+.panel-resize{position:absolute;top:0;right:-2px;bottom:0;width:9px;cursor:ew-resize;z-index:5;}
+.panel-resize:hover{background:linear-gradient(to right,transparent,rgba(149,0,255,0.18));border-radius:0 8px 8px 0;}
+.ms-legend-title{font-family:var(--mono);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--t-tertiary);margin-bottom:8px;}
+.ms-legend-row{display:flex;align-items:center;gap:9px;margin-bottom:5px;}
+.ms-legend-row:last-child{margin-bottom:0;}
+.ms-legend-emoji{font-size:16px;width:20px;text-align:center;flex-shrink:0;line-height:1.2;}
+.ms-legend-input{font-family:var(--body);font-size:12px;color:var(--t-primary);border:none;border-bottom:1px solid rgba(0,0,0,0.12);background:none;outline:none;padding:2px 0;flex:1;min-width:0;}
+.ms-legend-input:focus{border-bottom-color:rgba(149,0,255,0.4);}
+.ms-legend-input::placeholder{color:rgba(0,0,0,0.28);}
+.ms-legend-label-ro{font-family:var(--body);font-size:12px;color:var(--t-primary);flex:1;min-width:0;}
 
 /* ═══════════════════════════════════════════════════════════════════
    DRAW GHOST / TODAY LINE
@@ -429,6 +465,35 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bw);color:var(
   .grid-header{position:static!important;}
 }
 
+/* ── PDF CAPTURE layout (applied while rendering to PDF, then removed) ── */
+body.pdf-capture .toolbar,
+body.pdf-capture .trash-bin,
+body.pdf-capture #drop-indicator,
+body.pdf-capture .drag-chip,
+body.pdf-capture #move-ghost,
+body.pdf-capture .overlay,
+body.pdf-capture .color-pop,
+body.pdf-capture #ms-emoji-pick,
+body.pdf-capture .sidebar-resizer,
+body.pdf-capture .hscroll,
+body.pdf-capture .bar-edit-btn,
+body.pdf-capture .grp-actions,
+body.pdf-capture .row-actions,
+body.pdf-capture .drag-handle,
+body.pdf-capture .row-drag-handle,
+body.pdf-capture .today-line{display:none!important;}
+body.pdf-capture{overflow:visible!important;height:auto!important;background:#fff!important;}
+body.pdf-capture .hub-header{position:static!important;}
+body.pdf-capture .hub-footer{position:static!important;}
+body.pdf-capture .ms-legend{position:static!important;display:inline-block!important;margin:14px 0 0 16px;box-shadow:none;}
+body.pdf-capture .app-body{position:static!important;inset:auto!important;top:auto!important;bottom:auto!important;display:flex!important;overflow:visible!important;height:auto!important;}
+body.pdf-capture .sidebar{display:flex!important;}
+body.pdf-capture .sidebar-rows{overflow:visible!important;height:auto!important;}
+body.pdf-capture .grid-area{overflow:visible!important;}
+body.pdf-capture .grid-scroll{overflow:visible!important;height:auto!important;}
+body.pdf-capture .grid-canvas{overflow:visible!important;}
+body.pdf-capture .grid-header{position:static!important;}
+
 /* ── REDESIGN: toolbar zones, share button, sidebar hierarchy ── */
 .tz-label{font-family:var(--mono);font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:var(--t-tertiary);margin:0 4px 0 2px;flex-shrink:0;}
 .btn-share{font-family:var(--mono);font-size:9px;letter-spacing:0.13em;text-transform:uppercase;color:#fff;background:var(--pp);border:1px solid var(--pp);border-radius:4px;padding:6px 18px;cursor:pointer;transition:all 0.12s;}
@@ -465,7 +530,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bw);color:var(
 .ai-file-chip{display:flex;align-items:center;gap:6px;background:var(--bw);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-family:var(--mono);font-size:9px;letter-spacing:0.04em;color:var(--t-secondary);max-width:200px;}
 .ai-file-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ai-file-chip button{border:none;background:none;cursor:pointer;color:var(--t-tertiary);font-size:12px;line-height:1;padding:0;}
-.ai-spinner{width:34px;height:34px;border:3px solid rgba(149,0,255,0.18);border-top-color:var(--pp);border-radius:50%;margin:0 auto;animation:ai-spin 0.8s linear infinite;}
+.ai-progress{width:220px;height:6px;border-radius:4px;background:rgba(149,0,255,0.12);margin:0 auto;overflow:hidden;}
+.ai-progress-fill{height:100%;width:0%;border-radius:4px;background:var(--pp);transition:width .35s ease;}
 @keyframes ai-spin{to{transform:rotate(360deg);}}
 #btn-ai{color:#fff;background:var(--pp);border-color:var(--pp);}
 #btn-ai:hover{background:#7a00cc;border-color:#7a00cc;}
@@ -522,8 +588,7 @@ body.readonly #btn-guide{display:none!important;}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script>window.__SC_READONLY__=true;window.__SC_VIEWER__=true;</script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
@@ -568,20 +633,20 @@ body.readonly #btn-guide{display:none!important;}
     <button class="zoom-btn" id="btn-month">Month</button>
     <button class="zoom-btn" id="btn-quarter">Quarter</button>
   </div>
-  <button class="btn-action" id="btn-today">Today</button>
-  <div class="t-sep"></div>
-  <span class="tz-label">Build</span>
+  <span class="tz-label" style="margin-left:82px;color:var(--t-primary);">Build</span>
   <button class="btn-action" id="btn-add-group">+ Phase</button>
   <button class="btn-action" id="btn-add-row">+ Task</button>
   <button class="btn-action" id="btn-milestone">◆ Milestone</button>
   <button class="btn-action" id="btn-range">Add Date Range</button>
   <button class="btn-action" id="btn-ai">✨ AI Populate</button>
+  <button class="btn-action" id="btn-ai-edit" title="Ask AI to change the current timeline">✦ Ask AI</button>
   <button class="btn-action" id="btn-library">▤ Library</button>
   <button class="btn-action" id="btn-guide" title="How the Timeline Tool works">?</button>
   <div class="export-wrap" style="margin-left:auto;">
     <button class="btn-share" id="btn-export">Share with client ▾</button>
     <div class="export-menu" id="export-menu">
       <button class="export-item exp-client-item" id="exp-link">Get shareable client link</button>
+      <button class="export-item" id="exp-pdf">Download PDF</button>
     </div>
   </div>
 </div>
@@ -595,7 +660,9 @@ body.readonly #btn-guide{display:none!important;}
     <div class="sidebar-rows" id="sidebar-rows">
       <div id="drop-indicator"></div>
     </div>
+    <div class="sidebar-total" id="sidebar-total" style="display:none;"></div>
   </div>
+  <div class="sidebar-resizer" id="sidebar-resizer" title="Drag to resize"></div>
   <div class="grid-area">
     <div class="grid-scroll" id="grid-scroll">
       <div class="grid-canvas" id="grid-canvas">
@@ -669,13 +736,36 @@ body.readonly #btn-guide{display:none!important;}
 </div>
 </div>
 <div id="ai-stage-thinking" style="display:none;text-align:center;padding:24px 0;">
-<div class="ai-spinner"></div>
+<div class="ai-progress"><div class="ai-progress-fill" id="ai-prog-fill"></div></div>
 <div class="range-note" style="margin-top:18px;margin-bottom:0;">Reading your documents and building the timeline&hellip;</div>
 </div>
 <div id="ai-stage-error" style="display:none;">
 <div class="popup-title">Hmm.</div>
 <p class="range-note" id="ai-error-msg"></p>
 <div class="popup-actions"><button class="btn-primary" id="ai-back">Back</button></div>
+</div>
+</div>
+</div>
+<!-- ═══ ASK AI (EDIT) MODAL ═══ -->
+<div class="overlay hidden" id="aie-overlay">
+<div class="popup" style="width:440px;max-width:92vw;">
+<div id="aie-stage-input">
+<div class="popup-title">✦ Ask AI to edit the timeline</div>
+<p class="range-note">Describe a change and it&#39;s applied to the current board &mdash; e.g. &ldquo;compress the whole timeline by a month&rdquo;, &ldquo;push Production back two weeks&rdquo;, &ldquo;add a QA task to Delivery&rdquo;. Every change is one ⌘Z away from undone.</p>
+<div class="field"><textarea class="field-input" id="aie-input" rows="3" placeholder="What should change?" style="resize:vertical;width:100%;"></textarea></div>
+<div class="popup-actions">
+<button class="btn-cancel" id="aie-cancel">Cancel</button>
+<button class="btn-primary" id="aie-go">Apply change</button>
+</div>
+</div>
+<div id="aie-stage-thinking" style="display:none;text-align:center;padding:24px 0;">
+<div class="ai-progress"><div class="ai-progress-fill" id="aie-prog-fill"></div></div>
+<div class="range-note" style="margin-top:18px;margin-bottom:0;">Rearranging the timeline&hellip;</div>
+</div>
+<div id="aie-stage-error" style="display:none;">
+<div class="popup-title">Hmm.</div>
+<p class="range-note" id="aie-error-msg"></p>
+<div class="popup-actions"><button class="btn-primary" id="aie-back">Back</button></div>
 </div>
 </div>
 </div>
@@ -700,7 +790,7 @@ body.readonly #btn-guide{display:none!important;}
 </div>
 <!-- ═══ FOOTER ═══ -->
 <footer class="hub-footer">
-  <span>Strategy Creative</span>
+  <span>Strategy Creative&trade;</span>
   <span id="footer-client"></span>
   <span>Timeline Tool</span>
 </footer>
@@ -722,11 +812,6 @@ body.readonly #btn-guide{display:none!important;}
         <label class="field-label">End</label>
         <input class="field-input" id="bar-end" type="date">
       </div>
-    </div>
-    <div class="field">
-      <label class="field-label">Emoji Milestone</label>
-      <div class="emoji-grid" id="bar-emoji-grid"></div>
-      <button class="emoji-clear" id="bar-emoji-clear">✕ Clear emoji</button>
     </div>
     <div class="field">
       <label class="field-label">Colour</label>
@@ -780,9 +865,11 @@ let rangeEnd=(function(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getD
 let numCols=65, columnDates=[], colWidth=46;
 let groups=[], nextId=1;
 let selectedBarId=null, editingBarId=null, selectedMilestoneId=null;
+let _newBarId=null; // a just-drawn bar awaiting Save; removed if the popup is cancelled
 let dragState=null, groupDragId=null, rowDragId=null;
 const READONLY=(function(){try{if(window.__SC_READONLY__)return true;const p=new URLSearchParams(location.search);return p.get('view')==='1'||p.get('readonly')==='1';}catch(e){return false;}})();
-let milestones=[]; // {id, emoji, date (timestamp)}
+let milestones=[]; // {id, emoji, date (timestamp), row, name}
+let emojiLegend={}; // {emoji: label} — the bottom-left key shown to clients
 let milestoneDragId=null;
 let undoStack=[], redoStack=[], _pending=null;
 
@@ -825,19 +912,13 @@ function t2pxDay(t){
 }
 function t2pxSmart(t){return viewMode==='day'?t2pxDay(t):t2px(t);}
 
-// Snap a pixel position (in day view) to nearest half-day timestamp
-// isEnd=true returns the END of that half-day slot (for resize-right)
+// Snap a pixel position (in day view) to the nearest FULL-day boundary.
+// isEnd=true returns the end of the column left of that boundary (resize-right).
 function pxToHalfDayTime(px,isEnd){
-  const halfPx=colWidth/2;
-  let hi=Math.round(px/halfPx);
-  hi=Math.max(0,Math.min(numCols*2,hi));
-  const ci=Math.min(Math.floor(hi/2),numCols-1);
-  const second=hi%2===1;
-  const ds=columnDates[Math.max(0,ci)].getTime();
-  const dm=ds+12*3600*1000;
-  const de=colEnd(Math.max(0,ci)).getTime();
-  if(isEnd)return second?de:dm;
-  return second?dm:ds;
+  let b=Math.round(px/colWidth);
+  if(isEnd){b=Math.max(1,Math.min(numCols,b));return colEnd(b-1).getTime();}
+  b=Math.max(0,Math.min(numCols-1,b));
+  return columnDates[b].getTime();
 }
 
 function isLight(hex){
@@ -859,7 +940,7 @@ function barSpanCols(bar){
   return Math.max(1,count);
 }
 
-const GH=46,RH=58,BH=36,MH=18; // top gap; milestones snap inline with rows
+const GH=32,RH=38,BH=24,MH=18; // top gap; milestones snap inline with rows
 function rowTopMap(){const m={};let y=MH;for(const g of groups){y+=GH;if(!g.collapsed)for(const r of g.rows){m[r.id]=y;y+=RH;}}return m;}
 function rowAtY(y){let c=MH;for(const g of groups){c+=GH;if(!g.collapsed)for(const r of g.rows){if(y>=c&&y<c+RH)return r.id;c+=RH;}}return null;}
 function totalH(){let h=MH;for(const g of groups){h+=GH;if(!g.collapsed)h+=g.rows.length*RH;}return h;}
@@ -999,12 +1080,23 @@ function renderSidebar(){
     dh.innerHTML='<div class="dh-col"><div class="dh-dot"></div><div class="dh-dot"></div><div class="dh-dot"></div></div><div class="dh-col"><div class="dh-dot"></div><div class="dh-dot"></div><div class="dh-dot"></div></div>';
 
     const nm=document.createElement('span');
-    nm.className='grp-name';nm.contentEditable=READONLY?'false':'true';nm.spellcheck=false;nm.textContent=g.name;
-    nm.draggable=false; // ← prevent contentEditable intercepting HTML5 drag
-    nm.addEventListener('focus',()=>beginChange());
-    nm.addEventListener('blur',()=>commitChange());
+    nm.className='grp-name';nm.setAttribute('contenteditable','false');nm.spellcheck=false;nm.textContent=g.name;nm.dataset.ph='Phase name';
+    nm.draggable=false;
+    // Click-to-edit: the name is inert until clicked, so dragging works from
+    // anywhere on the phase row (not just the dot handle).
+    nm.addEventListener('blur',()=>{commitChange();nm.setAttribute('contenteditable','false');gEl.draggable=!READONLY;});
     nm.addEventListener('input',e=>{g.name=e.target.textContent;});
-    nm.addEventListener('click',e=>e.stopPropagation());
+    nm.addEventListener('keydown',ev=>{ev.stopPropagation();if(ev.key==='Enter'){ev.preventDefault();nm.blur();}});
+    nm.addEventListener('click',e=>{
+      e.stopPropagation();
+      if(READONLY)return;
+      if(nm.getAttribute('contenteditable')!=='true'){
+        beginChange();
+        nm.setAttribute('contenteditable','true');gEl.draggable=false;nm.focus();
+        const rng=document.createRange();rng.selectNodeContents(nm);
+        const sel=window.getSelection();sel.removeAllRanges();sel.addRange(rng);
+      }
+    });
 
     const chev=document.createElement('span');chev.className='collapse-chev';chev.textContent='▾';
 
@@ -1021,7 +1113,16 @@ function renderSidebar(){
     db.addEventListener('click',e=>{e.stopPropagation();deleteGroup(g.id);});
     acts.append(db,ab,cb);
 
-    gEl.append(dh,nm,acts,chev);
+    // Day-count chip: live span of this phase's bars; click ticks the phase done
+    const dchip=document.createElement('span');dchip.className='grp-days';
+    (function(){
+      const d=phaseDays(g);
+      dchip.textContent=(g.done?'✓ ':'')+(d>0?d+'d':'—');
+    })();
+    dchip.title=g.done?'Phase done — click to un-tick':'Days in this phase — click to mark done';
+    if(!READONLY)dchip.addEventListener('click',function(e){e.stopPropagation();commitNow();g.done=!g.done;render();autoSave();});
+    if(g.done)gEl.classList.add('gdone');
+    gEl.append(dh,nm,dchip,acts,chev);
 
     gEl.addEventListener('click',e=>{
       if(e.target===nm||e.target.closest('.grp-actions')||e.target.closest('.drag-handle'))return;
@@ -1039,31 +1140,25 @@ function renderSidebar(){
       hideDropIndicator();
       // Don't re-render here — drop handler already did it. Just clean up visuals.
     });
+    // Task drops onto a header still land the task in that phase.
+    // Phase reordering is handled at the column level (see sidebar-rows
+    // listeners) so a phase can be dropped anywhere in the column.
     gEl.addEventListener('dragover',e=>{
+      if(!rowDragId)return;
       e.preventDefault();
       const rect=gEl.getBoundingClientRect();
       const sbRect=document.getElementById('sidebar-rows').getBoundingClientRect();
       const ind=document.getElementById('drop-indicator');
       ind.style.display='block';
-      if(rowDragId){ind.style.top=(rect.bottom-sbRect.top)+'px';return;} // drop task into this phase
-      const before=e.clientY<rect.top+rect.height/2;
-      gEl.dataset.dropBefore=before?'1':'0';
-      ind.style.top=(before?rect.top-sbRect.top:rect.bottom-sbRect.top)+'px';
+      ind.style.top=(rect.bottom-sbRect.top)+'px';
     });
     gEl.addEventListener('dragleave',e=>{
-      if(!gEl.contains(e.relatedTarget))hideDropIndicator();
+      if(rowDragId&&!gEl.contains(e.relatedTarget))hideDropIndicator();
     });
     gEl.addEventListener('drop',e=>{
-      e.preventDefault();hideDropIndicator();
-      if(rowDragId){moveRowToGroup(rowDragId,g.id);return;}
-      if(!groupDragId||groupDragId===g.id)return;
-      const fi=groups.findIndex(x=>x.id===groupDragId),ti=groups.findIndex(x=>x.id===g.id);
-      if(fi<0||ti<0)return;
-      const before=gEl.dataset.dropBefore==='1';
-      const[moved]=groups.splice(fi,1);
-      const newTi=groups.findIndex(x=>x.id===g.id);
-      groups.splice(before?newTi:newTi+1,0,moved);
-      render();
+      if(!rowDragId)return;
+      e.preventDefault();e.stopPropagation();hideDropIndicator();
+      moveRowToGroup(rowDragId,g.id);
     });
     sb.appendChild(gEl);
 
@@ -1074,12 +1169,21 @@ function renderSidebar(){
         const dh2=document.createElement('div');dh2.className='row-drag-handle';
         dh2.innerHTML='<div class="dh-col"><div class="dh-dot"></div><div class="dh-dot"></div><div class="dh-dot"></div></div><div class="dh-col"><div class="dh-dot"></div><div class="dh-dot"></div><div class="dh-dot"></div></div>';
         const nm2=document.createElement('span');
-        nm2.className='row-name';nm2.contentEditable=READONLY?'false':'true';nm2.spellcheck=false;nm2.textContent=r.name;
+        nm2.className='row-name';nm2.setAttribute('contenteditable','false');nm2.spellcheck=false;nm2.textContent=r.name;nm2.dataset.ph='Task name';
         nm2.draggable=false;
-        nm2.addEventListener('focus',()=>beginChange());
-        nm2.addEventListener('blur',()=>commitChange());
+        nm2.addEventListener('blur',()=>{commitChange();nm2.setAttribute('contenteditable','false');rEl.draggable=!READONLY;});
         nm2.addEventListener('input',e=>{r.name=e.target.textContent;});
-        nm2.addEventListener('click',e=>e.stopPropagation());
+        nm2.addEventListener('keydown',ev=>{ev.stopPropagation();if(ev.key==='Enter'){ev.preventDefault();nm2.blur();}});
+        nm2.addEventListener('click',e=>{
+          e.stopPropagation();
+          if(READONLY)return;
+          if(nm2.getAttribute('contenteditable')!=='true'){
+            beginChange();
+            nm2.setAttribute('contenteditable','true');rEl.draggable=false;nm2.focus();
+            const rng=document.createRange();rng.selectNodeContents(nm2);
+            const sel=window.getSelection();sel.removeAllRanges();sel.addRange(rng);
+          }
+        });
         const acts2=document.createElement('div');acts2.className='row-actions';
         const a1=document.createElement('button');a1.className='ra-btn';a1.textContent='+';a1.title='Add task below';
         a1.addEventListener('click',()=>addRowBelow(r.id));
@@ -1110,6 +1214,40 @@ function renderSidebar(){
         sb.appendChild(rEl);
       }
     }
+  }
+  // Project total — pinned to the bottom of the column
+  {
+    const tot=document.getElementById('sidebar-total');
+    const pd=projectDays();
+    if(tot){
+      if(pd>0){
+        tot.style.display='flex';
+        tot.innerHTML='<span>Project total</span><b>'+pd+'d</b>';
+      }else tot.style.display='none';
+    }
+  }
+}
+
+// Day counts = SUM of each bar's own duration (paid time), so overlapping /
+// parallel bars are all counted rather than collapsed into one calendar span.
+function barDays(b){return Math.max(1,Math.round((b.end-b.start)/86400000));}
+function phaseDays(g){let d=0;g.rows.forEach(function(r){r.bars.forEach(function(b){d+=barDays(b);});});return d;}
+function projectDays(){let d=0;groups.forEach(function(g){d+=phaseDays(g);});return d;}
+
+// Live-refresh the phase day chips + project total without rebuilding the sidebar.
+// Called from renderGrid() so it stays in sync on every bar resize/draw/move/delete.
+function updateDayTotals(){
+  const chips=document.querySelectorAll('.grp-days');
+  groups.forEach(function(g,i){
+    const c=chips[i]; if(!c)return;
+    const d=phaseDays(g);
+    c.textContent=(g.done?'✓ ':'')+(d>0?d+'d':'—');
+  });
+  const tot=document.getElementById('sidebar-total');
+  if(tot){
+    const pd=projectDays();
+    if(pd>0){tot.style.display='flex';tot.innerHTML='<span>Project total</span><b>'+pd+'d</b>';}
+    else tot.style.display='none';
   }
 }
 
@@ -1184,10 +1322,97 @@ function renderGrid(){
   const total=groups.flatMap(g=>g.rows.flatMap(r=>r.bars));
   if(total.length===0&&groups.flatMap(g=>g.rows).length>0){
     const h=document.createElement('div');h.className='empty-hint';h.style.top=MH+'px';
-    h.innerHTML='<span><strong>Drag across the grid</strong> to draw a task bar<br>Double-click a bar to edit dates, colour &amp; milestone</span>';
+    h.innerHTML='<span><strong>Drag across the grid</strong> to draw a task bar<br>Click a bar to rename &middot; right-click to add a milestone &middot; hover for full edit</span>';
     content.appendChild(h);
   }
+  renderLegend();renderStats();updateDayTotals();
   content.addEventListener('mousedown',onGridDown);
+}
+
+// ── Milestone emoji legend (bottom-left key, editable labels) ──
+function renderStats(){
+  // Day counts live on the phase headers; the project total is the summary
+  // row under the last task (built in renderSidebar). Just clear leftovers.
+  const stale=document.getElementById('tl-stats');if(stale)stale.remove();
+}
+
+// ── Draggable panels (Key + Days) — drag by the title, position remembered ──
+function panelPos(key){try{const v=localStorage.getItem(key);return v?JSON.parse(v):null;}catch(e){return null;}}
+function applyPanelPos(el,key){
+  const p=panelPos(key);if(!p)return false;
+  // ignore degenerate or out-of-view saved positions — fall back to default
+  if(typeof p.left!=='number'||typeof p.top!=='number')return false;
+  if(p.left<0||p.top<0||p.left>window.innerWidth-40||p.top>window.innerHeight-30)return false;
+  el.style.left=p.left+'px';el.style.top=p.top+'px';el.style.bottom='auto';el.style.right='auto';
+  return true;
+}
+function applyPanelWidth(el,key){
+  try{const w=localStorage.getItem(key);if(w)el.style.width=Math.max(190,Math.min(520,parseInt(w,10)))+'px';}catch(e){}
+}
+function makePanelResizable(el,key){
+  let h=el.querySelector('.panel-resize');
+  if(!h){h=document.createElement('div');h.className='panel-resize';h.title='Drag to widen';el.appendChild(h);}
+  h.onmousedown=function(e){
+    e.preventDefault();e.stopPropagation();
+    const r=el.getBoundingClientRect(),sx=e.clientX,sw=r.width;
+    // keep the panel anchored where it is while its width changes
+    el.style.left=r.left+'px';el.style.top=r.top+'px';el.style.bottom='auto';el.style.right='auto';
+    function mv(ev){el.style.width=Math.max(190,Math.min(520,sw+(ev.clientX-sx)))+'px';}
+    function up(){
+      document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);
+      try{localStorage.setItem(key,String(el.getBoundingClientRect().width|0));}catch(e2){}
+    }
+    document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+  };
+}
+function makePanelDraggable(el,key,handleSel){
+  const h=handleSel?el.querySelector(handleSel):el;
+  if(!h)return;
+  h.style.cursor='grab';h.title='Drag to move';
+  h.addEventListener('mousedown',function(e){
+    e.preventDefault();e.stopPropagation();
+    const r=el.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;
+    h.style.cursor='grabbing';
+    function mv(ev){
+      const L=Math.max(0,Math.min(window.innerWidth-r.width,ev.clientX-ox));
+      const T=Math.max(0,Math.min(window.innerHeight-r.height,ev.clientY-oy));
+      el.style.left=L+'px';el.style.top=T+'px';el.style.bottom='auto';el.style.right='auto';
+    }
+    function up(ev){
+      document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);
+      h.style.cursor='grab';
+      const r2=el.getBoundingClientRect();
+      try{localStorage.setItem(key,JSON.stringify({left:r2.left,top:r2.top}));}catch(e2){}
+    }
+    document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+  });
+}
+function renderLegend(){
+  let el=document.getElementById('ms-legend');
+  if(!el){el=document.createElement('div');el.id='ms-legend';el.className='ms-legend';document.body.appendChild(el);}
+  const seen=[]; milestones.forEach(m=>{ if(m.emoji && seen.indexOf(m.emoji)<0) seen.push(m.emoji); });
+  if(!seen.length){el.style.display='none';el.innerHTML='';return;}
+  if(el.contains(document.activeElement))return; // don't clobber a label being typed
+  el.style.display='block';el.innerHTML='';
+  const title=document.createElement('div');title.className='ms-legend-title';title.textContent='Key';el.appendChild(title);
+  seen.forEach(em=>{
+    const row=document.createElement('div');row.className='ms-legend-row';
+    const sp=document.createElement('span');sp.className='ms-legend-emoji';sp.textContent=em;row.appendChild(sp);
+    if(READONLY){
+      const lab=document.createElement('span');lab.className='ms-legend-label-ro';lab.textContent=emojiLegend[em]||'';row.appendChild(lab);
+    }else{
+      const inp=document.createElement('input');inp.className='ms-legend-input';inp.type='text';
+      inp.placeholder='Add label…';inp.value=emojiLegend[em]||'';
+      inp.addEventListener('input',()=>{emojiLegend[em]=inp.value;autoSave();});
+      inp.addEventListener('keydown',ev=>{ev.stopPropagation();if(ev.key==='Enter')inp.blur();});
+      row.appendChild(inp);
+    }
+    el.appendChild(row);
+  });
+  applyPanelPos(el,'tt-pos2-key');
+  applyPanelWidth(el,'tt-w-key');
+  makePanelDraggable(el,'tt-pos2-key','.ms-legend-title');
+  makePanelResizable(el,'tt-w-key');
 }
 
 function renderMilestones(content){
@@ -1235,8 +1460,11 @@ function renderBarEl(container,bar,rowId,bs,be,rowTop){
   el.dataset.bid=bar.id;el.dataset.rid=rowId;
   el.style.cssText='left:'+left+'px;top:'+top+'px;width:'+width+'px;height:'+BH+'px;background:'+(bar.color||'#9500FF')+';';
   const inner=document.createElement('div');inner.className='bar-inner';
+  if(bar.emoji){const em=document.createElement('span');em.className='bar-emoji';em.textContent=bar.emoji;em.contentEditable='false';inner.appendChild(em);}
   const lbl=document.createElement('span');lbl.className='bar-label'+(light?' dark':'');
-  lbl.textContent=(bar.emoji?bar.emoji+' ':'')+((bar.label)||'');
+  lbl.textContent=(bar.label)||'';
+  // While editing, let clicks place the caret instead of starting a drag
+  lbl.addEventListener('mousedown',ev=>{ if(lbl.getAttribute('contenteditable')==='true') ev.stopPropagation(); });
   inner.appendChild(lbl);
   el.appendChild(inner);
   const hl=document.createElement('div');hl.className='bar-handle left';el.appendChild(hl);
@@ -1244,6 +1472,7 @@ function renderBarEl(container,bar,rowId,bs,be,rowTop){
 
   el.addEventListener('mousedown',e=>{
     if(READONLY)return;
+    if(lbl.getAttribute('contenteditable')==='true')return; // editing — let caret work
     e.stopPropagation();selectBar(bar.id);
     const rx=e.clientX-el.getBoundingClientRect().left;
     if(rx<12)startResize(e,bar,'left');
@@ -1251,8 +1480,56 @@ function renderBarEl(container,bar,rowId,bs,be,rowTop){
     else startMove(e,bar,left);
     e.preventDefault();
   });
-  el.addEventListener('dblclick',e=>{if(READONLY)return;e.stopPropagation();openBarPopup(bar.id);});
+  // Double-click → full edit popup (single click edits the label inline)
+  el.addEventListener('dblclick',e=>{
+    if(READONLY)return;
+    e.stopPropagation();clearTimeout(_barEditTimer);
+    const lbl2=el.querySelector('.bar-label');
+    if(lbl2&&lbl2.getAttribute('contenteditable')==='true')lbl2.blur();
+    openBarPopup(bar.id);
+  });
+  // Right-click → add a milestone emoji in this task row, just after the bar
+  el.addEventListener('contextmenu',e=>{
+    if(READONLY)return;
+    e.preventDefault();e.stopPropagation();selectBar(bar.id);
+    openMsEmojiPicker({left:e.clientX,right:e.clientX,top:e.clientY,bottom:e.clientY},function(em){
+      commitNow();
+      const _nm={id:uid(),emoji:em,date:bar.end,row:rowId,name:''};
+      milestones.push(_nm);selectedMilestoneId=_nm.id;
+      renderGrid();autoSave();
+    });
+  });
   container.appendChild(el);
+}
+
+// Click (no drag) on a bar → edit its label text inline.
+// Debounced so a double-click opens the full popup instead.
+var _barEditTimer=null;
+function enterBarEdit(barId){
+  if(READONLY)return;
+  const el=document.querySelector('.bar[data-bid="'+barId+'"]');if(!el)return;
+  const lbl=el.querySelector('.bar-label');if(!lbl)return;
+  const f=findBar(barId);if(!f)return;
+  beginChange();
+  lbl.setAttribute('contenteditable','true');
+  lbl.classList.add('editing');
+  lbl.focus();
+  const rng=document.createRange();rng.selectNodeContents(lbl);
+  const sel=window.getSelection();sel.removeAllRanges();sel.addRange(rng);
+  const onKey=ev=>{
+    ev.stopPropagation();
+    if(ev.key==='Enter'){ev.preventDefault();lbl.blur();}
+    else if(ev.key==='Escape'){ev.preventDefault();lbl.textContent=f.bar.label||'';lbl.blur();}
+  };
+  const finish=()=>{
+    lbl.removeEventListener('blur',finish);lbl.removeEventListener('keydown',onKey);
+    lbl.removeAttribute('contenteditable');lbl.classList.remove('editing');
+    const v=lbl.textContent.trim();
+    if(v!==(f.bar.label||'')){f.bar.label=v;commitChange();autoSave();}else{_pending=null;}
+    renderGrid();
+  };
+  lbl.addEventListener('keydown',onKey);
+  lbl.addEventListener('blur',finish);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1265,8 +1542,20 @@ function onGridDown(e){
   const rect=document.getElementById('grid-content').getBoundingClientRect();
   const x=e.clientX-rect.left,y=e.clientY-rect.top;
   const rowId=rowAtY(y);if(!rowId)return;
+  // Pressing within 12px of an existing bar's edge in this row grabs that
+  // edge (resize) instead of starting a new bar — kills accidental draws.
+  const _fr=findRow(rowId);
+  if(_fr){
+    let best=null;
+    for(const b of _fr.row.bars){
+      const dl=Math.abs(x-t2pxSmart(b.start)), dr=Math.abs(x-t2pxSmart(b.end));
+      if(dl<=12&&(!best||dl<best.d))best={bar:b,side:'left',d:dl};
+      if(dr<=12&&(!best||dr<best.d))best={bar:b,side:'right',d:dr};
+    }
+    if(best){selectBar(best.bar.id);startResize(e,best.bar,best.side);e.preventDefault();return;}
+  }
   beginChange();
-  dragState={type:'draw',rowId,colS:Math.floor(x/colWidth),colC:Math.floor(x/colWidth)};
+  dragState={type:'draw',rowId,colS:Math.floor(x/colWidth),colC:Math.floor(x/colWidth),sx:e.clientX,sy:e.clientY,drew:false};
   e.preventDefault();
 }
 function startMove(e,bar,origLeft){
@@ -1343,6 +1632,7 @@ document.addEventListener('mousemove',e=>{
   const rect=document.getElementById('grid-content').getBoundingClientRect();
   const x=e.clientX-rect.left;
   if(dragState.type==='draw'){
+    if(Math.abs(e.clientX-dragState.sx)>5||Math.abs(e.clientY-dragState.sy)>5)dragState.drew=true;
     dragState.colC=Math.max(0,Math.min(numCols-1,Math.floor(x/colWidth)));updateGhost();
   }else if(dragState.type==='move'){
     if(!dragState.moved){
@@ -1389,17 +1679,21 @@ document.addEventListener('mouseup',e=>{
   if(!dragState)return;
   if(dragState.type==='draw'){
     removeGhost();
-    const si=Math.min(dragState.colS,dragState.colC),ei=Math.max(dragState.colS,dragState.colC);
-    const f=findRow(dragState.rowId);
+    const ds=dragState; dragState=null;
+    if(!ds.drew){ _pending=null; return; } // a click/misclick (no drag) — don't create a bar
+    const si=Math.min(ds.colS,ds.colC),ei=Math.max(ds.colS,ds.colC);
+    const f=findRow(ds.rowId);
     if(f){
       const bar={id:uid(),start:snapS(si),end:snapE(ei),color:PALETTE[f.row.bars.length%PALETTE.length],label:'',progress:0};
-      f.row.bars.push(bar);renderGrid();renderSidebar();selectBar(bar.id);commitChange();openBarPopup(bar.id);
-    }
-    dragState=null;return;
+      f.row.bars.push(bar);renderGrid();renderSidebar();selectBar(bar.id);
+      _newBarId=bar.id;            // pending — removed if the popup is cancelled (not saved)
+      openBarPopup(bar.id);
+    } else { _pending=null; }
+    return;
   }
   if(dragState.type==='move'){
     hideDropGhost();
-    if(!dragState.moved){_pending=null;dragState=null;return;}
+    if(!dragState.moved){var _cbid=dragState.barId;_pending=null;dragState=null;clearTimeout(_barEditTimer);_barEditTimer=setTimeout(function(){enterBarEdit(_cbid);},230);return;}
     if(overBin){
       deleteBar(dragState.barId);selectedBarId=null;renderGrid();commitChange();
     }else if(inGrid(e.clientX,e.clientY)){
@@ -1470,18 +1764,6 @@ function openBarPopup(barId){
   document.getElementById('bar-label').value=f.bar.label||'';
   document.getElementById('bar-start').value=fmtDate(f.bar.start);
   document.getElementById('bar-end').value=fmtDate(f.bar.end);
-  // Emoji grid
-  const eg=document.getElementById('bar-emoji-grid');eg.innerHTML='';
-  EMOJIS.forEach(em=>{
-    const btn=document.createElement('button');btn.className='emoji-btn'+(f.bar.emoji===em?' selected':'');
-    btn.textContent=em;btn.type='button';
-    btn.addEventListener('click',()=>{
-      const prev=eg.querySelector('.emoji-btn.selected');
-      if(prev===btn){btn.classList.remove('selected');f.bar.emoji=null;}
-      else{if(prev)prev.classList.remove('selected');btn.classList.add('selected');f.bar.emoji=em;}
-    });
-    eg.appendChild(btn);
-  });
   // Colour swatches
   const sg=document.getElementById('bar-swatch-grid');sg.innerHTML='';
   PALETTE.forEach(c=>{
@@ -1494,9 +1776,17 @@ function openBarPopup(barId){
   document.getElementById('bar-overlay').classList.remove('hidden');
   setTimeout(()=>document.getElementById('bar-label').focus(),50);
 }
-function closeBarPopup(){commitChange();document.getElementById('bar-overlay').classList.add('hidden');editingBarId=null;}
+function closeBarPopup(){
+  if(_newBarId){ // cancelled a freshly-drawn bar → remove it instead of keeping a stray bar
+    deleteBar(_newBarId);_newBarId=null;_pending=null;
+    document.getElementById('bar-overlay').classList.add('hidden');editingBarId=null;
+    renderGrid();renderSidebar();return;
+  }
+  commitChange();document.getElementById('bar-overlay').classList.add('hidden');editingBarId=null;
+}
 function saveBarPopup(){
   if(!editingBarId)return;const f=findBar(editingBarId);if(!f)return;
+  _newBarId=null; // saved → keep the bar
   f.bar.label=document.getElementById('bar-label').value;
   const ns=parseDate(document.getElementById('bar-start').value);
   const ne=parseDate(document.getElementById('bar-end').value);
@@ -1540,7 +1830,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('#color-pop')&&!e.tar
 // ═══════════════════════════════════════════════════════════════════
 // MILESTONE EMOJI PICKER
 // ═══════════════════════════════════════════════════════════════════
-function openMsEmojiPicker(anchorRect){
+function openMsEmojiPicker(anchorRect,onPick){
   let pick=document.getElementById('ms-emoji-pick');
   if(!pick){
     pick=document.createElement('div');
@@ -1558,12 +1848,13 @@ function openMsEmojiPicker(anchorRect){
     btn.addEventListener('click',e=>{
       e.stopPropagation();
       if(READONLY)return;
+      if(typeof onPick==='function'){ pick.style.display='none'; onPick(em); return; }
       commitNow();
       const gs=document.getElementById('grid-scroll');
       const centerPx=gs.scrollLeft+gs.clientWidth/2;
       const colIdx=Math.max(0,Math.min(numCols-1,Math.floor(centerPx/colWidth)));
       const _tm=rowTopMap();const _firstRow=Object.keys(_tm)[0]||null;
-      const _nm={id:uid(),emoji:em,date:snapS(colIdx),row:_firstRow};milestones.push(_nm);selectedMilestoneId=_nm.id;
+      const _nm={id:uid(),emoji:em,date:snapS(colIdx),row:_firstRow,name:''};milestones.push(_nm);selectedMilestoneId=_nm.id;
       pick.style.display='none';
       renderGrid();autoSave();
     });
@@ -1595,11 +1886,11 @@ let _saveTimer=null;
 // ═══════════════════════════════════════════════════════════════════
 // UNDO / REDO
 // ═══════════════════════════════════════════════════════════════════
-function snapState(){return JSON.stringify({groups,nextId,viewMode,startYear,startMonth,milestones,rangeStart,rangeEnd});}
+function snapState(){return JSON.stringify({groups,nextId,viewMode,startYear,startMonth,milestones,emojiLegend,rangeStart,rangeEnd});}
 function applyState(str){
   try{const s=JSON.parse(str);
     groups=s.groups; nextId=s.nextId; viewMode=s.viewMode||'day';
-    startYear=s.startYear; startMonth=s.startMonth; milestones=s.milestones||[];
+    startYear=s.startYear; startMonth=s.startMonth; milestones=s.milestones||[]; emojiLegend=s.emojiLegend||{};
     rangeStart=s.rangeStart||rangeStart; rangeEnd=s.rangeEnd||rangeEnd;
   }catch(err){return;}
   selectedBarId=null; editingBarId=null; dragState=null; milestoneDragId=null; _pending=null;
@@ -1627,7 +1918,7 @@ document.addEventListener('keydown',e=>{
 function autoSave(){
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>{
-    try{localStorage.setItem('sc-timeline-state-v4',JSON.stringify({groups,nextId,viewMode,startYear,startMonth,milestones,rangeStart,rangeEnd}));}catch(e){}
+    try{localStorage.setItem('sc-timeline-state-v4',JSON.stringify({groups,nextId,viewMode,startYear,startMonth,milestones,emojiLegend,rangeStart,rangeEnd}));}catch(e){}
   },800);
 }
 
@@ -1635,7 +1926,7 @@ function autoSave(){
 // EXPORT
 // ═══════════════════════════════════════════════════════════════════
 function exportHTML(){
-  const state=JSON.stringify({groups,nextId,viewMode,startYear,startMonth,milestones,rangeStart,rangeEnd});
+  const state=JSON.stringify({groups,nextId,viewMode,startYear,startMonth,milestones,emojiLegend,rangeStart,rangeEnd});
   const injection='<script>window.__SC_STATE__='+JSON.stringify(state)+';<\/script>';
   const html=document.documentElement.outerHTML.replace('</body>',injection+'</body>');
   const blob=new Blob([html],{type:'text/html'});
@@ -1645,7 +1936,99 @@ function exportHTML(){
   a.download=proj+'-'+new Date().toISOString().slice(0,10)+'.html';
   a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
 }
-function exportPDF(){window.print();}
+function _pdfProgress(msg){
+  let d=document.getElementById('pdf-progress');
+  if(!d){d=document.createElement('div');d.id='pdf-progress';
+    d.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(237,233,227,0.94);display:flex;align-items:center;justify-content:center;font-family:var(--body);font-size:14px;color:rgba(0,0,0,0.55);';
+    document.body.appendChild(d);}
+  d.textContent=msg;return d;
+}
+function _loadPdfLibs(){
+  if(window.html2canvas && window.jspdf) return Promise.resolve();
+  const urls=[
+    'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+  ];
+  return urls.reduce((p,u)=>p.then(()=>new Promise((res,rej)=>{
+    if(u.indexOf('html2canvas')>=0 && window.html2canvas) return res();
+    if(u.indexOf('jspdf')>=0 && window.jspdf) return res();
+    const s=document.createElement('script');s.src=u;s.onload=()=>res();s.onerror=()=>rej(new Error('Could not load PDF tools (check your connection).'));document.head.appendChild(s);
+  })),Promise.resolve());
+}
+async function downloadPDF(){
+  const menu=document.getElementById('export-menu');if(menu)menu.classList.remove('open');
+  const prog=_pdfProgress('Preparing PDF…');
+  const K=2; // capture scale (DPI)
+  try{
+    await _loadPdfLibs();
+    prog.textContent='Rendering timeline…';
+    selectBar(null);selectedMilestoneId=null;
+    document.body.classList.add('pdf-capture');
+    await new Promise(r=>setTimeout(r,90));
+    const appBody=document.querySelector('.app-body');
+    const sidebarEl=document.querySelector('.sidebar');
+    const Wn=Math.round(sidebarEl.getBoundingClientRect().width*K); // names column width (canvas px)
+    const fullW=appBody.scrollWidth, fullH=appBody.scrollHeight;
+    const appImg=await html2canvas(appBody,{backgroundColor:'#ffffff',scale:K,useCORS:true,width:fullW,height:fullH,windowWidth:fullW,windowHeight:fullH,scrollX:0,scrollY:0,ignoreElements:el=>el.id==='pdf-progress'});
+    let legendImg=null;
+    const legEl=document.getElementById('ms-legend');
+    if(legEl && legEl.style.display!=='none' && legEl.offsetHeight>0){
+      try{legendImg=await html2canvas(legEl,{backgroundColor:'#ffffff',scale:K,useCORS:true});}catch(e){legendImg=null;}
+    }
+    document.body.classList.remove('pdf-capture');
+    prog.textContent='Building PDF…';
+
+    const H=appImg.height;                 // names & grid share this height
+    const Wg=Math.max(1, appImg.width-Wn); // grid width (canvas px)
+    const colPx=Math.max(1, Math.round(colWidth*K));
+
+    const jsPDFCtor=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+    const pdf=new jsPDFCtor({orientation:'landscape',unit:'pt',format:'a4'});
+    const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
+    const m=26, footerH=16, titleH=48;
+    const topPage1=m+titleH, bottom=pageH-m-footerH, availH1=bottom-topPage1;
+    let S=Math.min(availH1/H, 0.62);       // fit full height on page 1, capped for readability
+    let gridPxPerPage=((pageW-2*m)/S)-Wn;  // grid px that fit beside the names column
+    if(gridPxPerPage<colPx)gridPxPerPage=colPx;
+    let colsPerPage=Math.max(1, Math.floor(gridPxPerPage/colPx));
+    gridPxPerPage=colsPerPage*colPx;        // break on whole columns
+    const numPages=Math.max(1, Math.ceil(Wg/gridPxPerPage));
+
+    const projName=(document.getElementById('client-name').textContent.trim())||'Project Timeline';
+    const dateStr=(document.getElementById('nav-date').textContent.trim())||'';
+
+    for(let p=0;p<numPages;p++){
+      if(p>0)pdf.addPage('a4','landscape');
+      const srcX=p*gridPxPerPage, srcW=Math.min(gridPxPerPage, Wg-srcX);
+      const pc=document.createElement('canvas');
+      pc.width=Wn+srcW; pc.height=H;
+      const ctx=pc.getContext('2d');
+      ctx.fillStyle='#ffffff';ctx.fillRect(0,0,pc.width,pc.height);
+      ctx.drawImage(appImg, 0,0,Wn,H, 0,0,Wn,H);                 // names column (repeated)
+      ctx.drawImage(appImg, Wn+srcX,0,srcW,H, Wn,0,srcW,H);      // this page's time slice
+      const yTop=(p===0)?topPage1:m;
+      pdf.addImage(pc.toDataURL('image/png'),'PNG', m, yTop, pc.width*S, pc.height*S);
+      if(p===0){
+        pdf.setTextColor(20,20,20);pdf.setFont('helvetica','bold');pdf.setFontSize(15);
+        pdf.text(projName, m, m+16);
+        pdf.setFont('helvetica','normal');pdf.setFontSize(9);pdf.setTextColor(120,120,120);
+        pdf.text((dateStr?dateStr+'   ·   ':'')+'Project Timeline', m, m+31);
+        if(legendImg){
+          const lh=Math.min(titleH-6,40), lw=legendImg.width*(lh/legendImg.height);
+          pdf.addImage(legendImg.toDataURL('image/png'),'PNG', pageW-m-lw, m, lw, lh);
+        }
+      }
+      pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(150,150,150);
+      pdf.text('Strategy Creative', m, pageH-12);
+      pdf.text('Page '+(p+1)+' of '+numPages, pageW-m, pageH-12, {align:'right'});
+    }
+    const fn=(projName.replace(/\s+/g,'-').toLowerCase()||'timeline')+'-'+new Date().toISOString().slice(0,10)+'.pdf';
+    pdf.save(fn);
+  }catch(err){
+    document.body.classList.remove('pdf-capture');
+    alert('Could not generate the PDF: '+((err&&err.message)||err));
+  }finally{ if(prog)prog.remove(); }
+}
 function showDriveInfo(){document.getElementById('drive-overlay').classList.remove('hidden');}
 // Viewer page that renders a published timeline by id (set to wherever view.html is hosted)
 const SC_VIEWER_BASE='https://strategy-creative.github.io/SC-HUB/view.html';
@@ -1680,16 +2063,12 @@ document.getElementById('btn-export').addEventListener('click',e=>{
 });
 document.addEventListener('click',()=>document.getElementById('export-menu').classList.remove('open'));
 document.getElementById('exp-link').addEventListener('click',getShareLink);
+document.getElementById('exp-pdf').addEventListener('click',downloadPDF);
 document.getElementById('sharelink-close').addEventListener('click',function(){document.getElementById('sharelink-overlay').classList.add('hidden');});
 document.getElementById('sharelink-copy').addEventListener('click',function(){var inp=document.getElementById('sharelink-url');inp.select();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(inp.value).catch(function(){});}else{try{document.execCommand('copy');}catch(e){}}});
 document.getElementById('sharelink-overlay').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
-document.getElementById('btn-today').addEventListener('click',()=>{render();setTimeout(scrollToToday,30);});
 document.getElementById('btn-close-drive').addEventListener('click',()=>document.getElementById('drive-overlay').classList.add('hidden'));
 document.getElementById('drive-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('drive-overlay'))document.getElementById('drive-overlay').classList.add('hidden');});
-document.getElementById('bar-emoji-clear').addEventListener('click',()=>{
-  if(editingBarId){const f=findBar(editingBarId);if(f)f.bar.emoji=null;}
-  document.querySelectorAll('#bar-emoji-grid .emoji-btn').forEach(b=>b.classList.remove('selected'));
-});
 
 // ═══════════════════════════════════════════════════════════════════
 // GROUP & ROW MANAGEMENT
@@ -1770,6 +2149,56 @@ function scrollToToday(){
   if(px>=0)s.scrollLeft=Math.max(0,px-s.clientWidth/3);
 }
 
+// ── Phase reordering at the column level: while dragging a phase, the whole
+//    Phases & Tasks column is a drop target. The nearest phase boundary to the
+//    cursor gets the indicator, and dropping inserts there. ──
+(function(){
+  const sb=document.getElementById('sidebar-rows');
+  function groupBlocks(){
+    const headers=[...sb.querySelectorAll('.group-item')];
+    return headers.map(function(h,i){
+      const top=h.getBoundingClientRect().top;
+      let bottom=h.getBoundingClientRect().bottom;
+      let n=h.nextElementSibling;
+      while(n&&!n.classList.contains('group-item')){
+        if(n.classList.contains('row-item'))bottom=n.getBoundingClientRect().bottom;
+        n=n.nextElementSibling;
+      }
+      return {gid:h.dataset.gid,top:top,bottom:bottom};
+    });
+  }
+  sb.addEventListener('dragover',function(e){
+    if(!groupDragId)return;
+    e.preventDefault();
+    const blocks=groupBlocks();if(!blocks.length)return;
+    const sbRect=sb.getBoundingClientRect();
+    let idx=blocks.length,indY=blocks[blocks.length-1].bottom;
+    for(let i=0;i<blocks.length;i++){
+      // Flip after ~one row into a block (not its midpoint) so tall phases
+      // don't need the cursor dragged halfway through them to respond.
+      const cut=blocks[i].top+Math.min((blocks[i].bottom-blocks[i].top)/2,RH);
+      if(e.clientY<cut){idx=i;indY=blocks[i].top;break;}
+    }
+    sb.dataset.gDropIdx=String(idx);
+    const ind=document.getElementById('drop-indicator');
+    ind.style.display='block';
+    ind.style.top=(indY-sbRect.top)+'px';
+  });
+  sb.addEventListener('drop',function(e){
+    if(!groupDragId)return;
+    e.preventDefault();hideDropIndicator();
+    let idx=parseInt(sb.dataset.gDropIdx||'-1',10);
+    const fi=groups.findIndex(function(x){return x.id===groupDragId;});
+    if(fi<0||idx<0)return;
+    if(idx===fi||idx===fi+1){render();return;} // dropped back where it was
+    commitNow();
+    const moved=groups.splice(fi,1)[0];
+    if(idx>fi)idx--;
+    groups.splice(idx,0,moved);
+    render();
+  });
+})();
+
 // Scroll sync
 let syncLock=false;
 function setupSync(){
@@ -1779,17 +2208,18 @@ function setupSync(){
   // Pen/pad friendly: when rows fit (no vertical overflow) or Shift is held,
   // translate vertical wheel/scroll into horizontal movement across the timeline.
   gs.addEventListener('wheel',e=>{
-    // Horizontal-primary tool: the wheel/pad scrolls ACROSS the timeline by default.
-    // Hold Shift to scroll rows up/down instead.
+    // Up/down wheel → move the whole view up/down (reveal rows off the bottom) — native scrollTop.
+    // Left/right wheel/swipe → move across the timeline. Shift+wheel also pans horizontally (handy on a plain mouse).
     const canX=gs.scrollWidth>gs.clientWidth+1;
-    const canY=gs.scrollHeight>gs.clientHeight+1;
     if(e.shiftKey){
-      if(canY){gs.scrollTop+=e.deltaY;e.preventDefault();}
+      if(canX){gs.scrollLeft+=(e.deltaX||e.deltaY);e.preventDefault();}
       return;
     }
-    if(canX&&Math.abs(e.deltaY)>=Math.abs(e.deltaX)){
-      gs.scrollLeft+=e.deltaY;e.preventDefault();
+    if(Math.abs(e.deltaX)>Math.abs(e.deltaY)){
+      if(canX){gs.scrollLeft+=e.deltaX;e.preventDefault();}
+      return;
     }
+    // vertical wheel: let native handling scroll the rows up/down (no preventDefault)
   },{passive:false});
 
   // Always-visible custom horizontal scrollbar (reliable on Mac / pen)
@@ -1842,25 +2272,16 @@ function updateDate(){
 // SEED DATA
 // ═══════════════════════════════════════════════════════════════════
 function seedData(){
+  // Blank start: one empty phase + one empty task. Names render as
+  // placeholder boxes (see .grp-name/.row-name :empty:before) so the
+  // user can type straight into them.
   groups=[
-    {id:uid(),name:'Discovery',color:'#E4E1DA',collapsed:false,rows:[
-      {id:uid(),name:'Research & Audit',bars:[]},
-      {id:uid(),name:'Stakeholder Interviews',bars:[]},
-    ]},
-    {id:uid(),name:'Strategy',color:'#E4E1DA',collapsed:false,rows:[
-      {id:uid(),name:'Brand Strategy',bars:[]},
-      {id:uid(),name:'Concept Development',bars:[]},
-    ]},
-    {id:uid(),name:'Creative',color:'#E4E1DA',collapsed:false,rows:[
-      {id:uid(),name:'Identity Design',bars:[]},
-      {id:uid(),name:'Brand Guidelines',bars:[]},
-    ]},
-    {id:uid(),name:'Delivery',color:'#E4E1DA',collapsed:false,rows:[
-      {id:uid(),name:'Review & Amends',bars:[]},
-      {id:uid(),name:'Final Handover',bars:[]},
+    {id:uid(),name:'',color:'#E4E1DA',collapsed:false,rows:[
+      {id:uid(),name:'',bars:[]},
     ]},
   ];
   milestones=[];
+  emojiLegend={};
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2007,19 +2428,32 @@ function mapAIToTimeline(data){
     });
     newGroups.push({id:uid(),name:(ph.name||'Phase'),color:'#E4E1DA',collapsed:false,rows:rows.length?rows:[{id:uid(),name:'Task 1',bars:[]}]});
   });
+  // Collect every bar (with its row) so milestones can attach in-row, just after a bar.
+  const allBars=[];
+  newGroups.forEach(function(g){g.rows.forEach(function(r){r.bars.forEach(function(b){allBars.push({rowId:r.id,end:b.end});});});});
   const newMs=(data.milestones||[]).map(function(m){
     const d=parseAIDate(m.date); if(!d)return null;
-    starts.push(d);ends.push(d);
-    return {id:uid(),emoji:(m.emoji&&EMOJIS.indexOf(m.emoji)>=0)?m.emoji:'\u{1F3AF}',date:d};
+    let row=null, date=d;
+    if(allBars.length){
+      // snap to the bar whose end is nearest the milestone date → sits in that task row, after the bar
+      let best=allBars[0], bestDiff=Math.abs(allBars[0].end-d);
+      for(const b of allBars){const diff=Math.abs(b.end-d); if(diff<bestDiff){best=b;bestDiff=diff;}}
+      row=best.rowId; date=best.end;
+    }
+    starts.push(date);ends.push(date);
+    return {id:uid(),emoji:(m.emoji&&EMOJIS.indexOf(m.emoji)>=0)?m.emoji:'\u{1F3AF}',date:date,row:row,name:(m.name||'')};
   }).filter(Boolean);
-  return {groups:newGroups,milestones:newMs,starts:starts,ends:ends};
+  // Seed the legend from milestone names (first name per emoji wins)
+  const legend={};
+  newMs.forEach(function(m){ if(m.name && !legend[m.emoji]) legend[m.emoji]=m.name; });
+  return {groups:newGroups,milestones:newMs,emojiLegend:legend,starts:starts,ends:ends};
 }
 
 function applyAIPopulate(data){
   const mapped=mapAIToTimeline(data);
   if(!mapped.groups.length){showAIError('No phases could be found in those documents. Try adding more detail in the notes.');return;}
   commitNow();
-  groups=mapped.groups; milestones=mapped.milestones;
+  groups=mapped.groups; milestones=mapped.milestones; emojiLegend=mapped.emojiLegend||{};
   if(data.projectName){var cn=document.getElementById('client-name');cn.textContent=data.projectName;document.getElementById('footer-client').textContent=String(data.projectName).toUpperCase();}
   if(mapped.starts.length){
     const minS=Math.min.apply(null,mapped.starts), maxE=Math.max.apply(null,mapped.ends);
@@ -2050,14 +2484,159 @@ function runAIPopulate(){
 }
 
 // ── Modal control ──
+const _aiProgTimers={};
+function startAIProgress(id){
+  const f=document.getElementById(id);if(!f)return;
+  let p=0;f.style.width='0%';
+  clearInterval(_aiProgTimers[id]);
+  _aiProgTimers[id]=setInterval(function(){p+=(90-p)*0.055+0.25;if(p>90)p=90;f.style.width=p+'%';},300);
+}
+function stopAIProgress(id){clearInterval(_aiProgTimers[id]);const f=document.getElementById(id);if(f)f.style.width='100%';}
 function showAIStage(s){
   document.getElementById('ai-stage-input').style.display=(s==='input')?'block':'none';
   document.getElementById('ai-stage-thinking').style.display=(s==='thinking')?'block':'none';
   document.getElementById('ai-stage-error').style.display=(s==='error')?'block':'none';
+  if(s==='thinking')startAIProgress('ai-prog-fill');else stopAIProgress('ai-prog-fill');
 }
 function openAIPopup(){showAIStage('input');document.getElementById('ai-start').value=fmtDate(Date.now());document.getElementById('ai-overlay').classList.remove('hidden');}
 function closeAIPopup(){document.getElementById('ai-overlay').classList.add('hidden');}
 function showAIError(msg){document.getElementById('ai-error-msg').textContent=msg||'Something went wrong.';showAIStage('error');}
+
+// ═══ ASK AI — edit the existing timeline in place ═══
+const TIMELINE_EDIT_PROMPT=`You are editing an existing project timeline (a Gantt-style plan) for Strategy Creative. You receive the CURRENT TIMELINE as JSON and an INSTRUCTION from the user. Apply the instruction and return the FULL updated timeline.
+
+OUTPUT SHAPE (return exactly this structure, ONE raw JSON object, no markdown, no commentary):
+{
+  "phases":[{"id":"keep-original-id","name":"Discovery","tasks":[{"id":"keep","name":"Research","bars":[{"id":"keep","label":"","start":"2026-06-15","end":"2026-06-26","color":"#9500FF","progress":0}]}]}],
+  "milestones":[{"id":"keep","name":"Launch","emoji":"🏁","date":"2026-08-01","taskId":"task-id-or-null"}],
+  "view":{"start":"2026-06-01","end":"2027-05-31"}
+}
+
+RULES:
+- Apply ONLY what the instruction asks. Everything else comes back unchanged — same ids, names, colours, labels, progress, order.
+- Keep the id of every item that survives; omit id only for genuinely new items.
+- Dates are YYYY-MM-DD; every bar's start must be before its end.
+- "Compress/extend the timeline by X" = scale and shift bars and milestones proportionally so the overall span changes by X while sequencing and overlaps are preserved as closely as possible.
+- Milestones move with the work they belong to.
+- "view" is the visible date range of the board, not the work itself. If the user asks to change the view, the visible range, or where the timeline starts/ends ("make the view start in December"), change ONLY view.start/view.end and leave every bar and milestone untouched. Keep the view wide enough to contain all bars unless the user explicitly asks otherwise.
+- If the instruction is impossible or too unclear to apply safely, return ONLY {"note":"one short sentence explaining why"} and nothing else.`;
+
+function tlStateForAI(){
+  return {
+    phases:groups.map(function(g){return {id:g.id,name:g.name,tasks:g.rows.map(function(r){return {id:r.id,name:r.name,bars:r.bars.map(function(b){return {id:b.id,label:b.label||'',start:fmtDate(b.start),end:fmtDate(b.end),color:b.color||'#9500FF',progress:b.progress||0};})};})};}),
+    milestones:milestones.map(function(m){return {id:m.id,name:m.name||'',emoji:m.emoji,date:fmtDate(m.date),taskId:m.row||null};}),
+    view:{start:fmtDate(rangeStart),end:fmtDate(rangeEnd)}
+  };
+}
+
+function applyAIEdit(data){
+  if(!data||!Array.isArray(data.phases))throw new Error('bad shape');
+  const oldBars={};groups.forEach(function(g){g.rows.forEach(function(r){r.bars.forEach(function(b){oldBars[b.id]=b;});});});
+  const oldMs={};milestones.forEach(function(m){oldMs[m.id]=m;});
+  const oldGroups={};groups.forEach(function(g){oldGroups[g.id]=g;});
+  const oldRows={};groups.forEach(function(g){g.rows.forEach(function(r){oldRows[r.id]=r;});});
+  const ng=[];let nBars=0;
+  data.phases.forEach(function(p){
+    const og=p.id?oldGroups[p.id]:null;
+    const g=Object.assign({},og||{},{id:p.id||uid(),name:p.name!=null?String(p.name):'Phase',
+      color:(og&&og.color)||'#E4E1DA',collapsed:og?!!og.collapsed:false,rows:[]});
+    (p.tasks||[]).forEach(function(t){
+      const or_=t.id?oldRows[t.id]:null;
+      const r=Object.assign({},or_||{},{id:t.id||uid(),name:t.name!=null?String(t.name):'Task',bars:[]});
+      (t.bars||[]).forEach(function(b){
+        const s=parseDate(b.start),e2=parseDate(b.end);
+        if(isNaN(s)||isNaN(e2))return;
+        const old=b.id?oldBars[b.id]:null;
+        r.bars.push({id:b.id||uid(),start:Math.min(s,e2),end:Math.max(s,e2)+(s===e2?86400000:0),
+          color:b.color||(old&&old.color)||PALETTE[r.bars.length%PALETTE.length],
+          label:(b.label!=null?String(b.label):(old?old.label:''))||'',
+          progress:(typeof b.progress==='number'?b.progress:(old?old.progress:0))||0,
+          emoji:(old&&old.emoji)||undefined});
+        nBars++;
+      });
+      g.rows.push(r);
+    });
+    ng.push(g);
+  });
+  const hadBars=Object.keys(oldBars).length>0;
+  if(!ng.length||(hadBars&&!nBars))throw new Error('empty');
+  const rowIds={};ng.forEach(function(g){g.rows.forEach(function(r){rowIds[r.id]=true;});});
+  const nm=(data.milestones||[]).map(function(m){
+    const d=parseDate(m.date);if(isNaN(d))return null;
+    const old=m.id?oldMs[m.id]:null;
+    return {id:m.id||uid(),emoji:m.emoji||(old&&old.emoji)||'⭐',date:d,
+      row:(m.taskId&&rowIds[m.taskId])?m.taskId:null,
+      name:(m.name!=null?String(m.name):(old?old.name:''))||'',
+      y:old?old.y:undefined};
+  }).filter(Boolean);
+  // Did the AI change the visible range?
+  let viewSet=false;
+  if(data.view&&data.view.start&&data.view.end){
+    const vs=parseDate(data.view.start),ve=parseDate(data.view.end);
+    if(!isNaN(vs)&&!isNaN(ve)&&ve>vs&&(vs!==rangeStart||ve!==rangeEnd)){
+      var _newRangeS=vs,_newRangeE=ve;viewSet=true;
+    }
+  }
+  commitNow();
+  groups=ng;milestones=nm;
+  if(viewSet){rangeStart=_newRangeS;rangeEnd=_newRangeE;}
+  // Widen the visible range if the new plan falls outside it
+  let minS=Infinity,maxE=-Infinity;
+  groups.forEach(function(g){g.rows.forEach(function(r){r.bars.forEach(function(b){minS=Math.min(minS,b.start);maxE=Math.max(maxE,b.end);});});});
+  nm.forEach(function(m){minS=Math.min(minS,m.date);maxE=Math.max(maxE,m.date);});
+  if(isFinite(minS)&&!viewSet){
+    if(minS<rangeStart){const d1=new Date(minS);rangeStart=new Date(d1.getFullYear(),d1.getMonth(),1).getTime();}
+    if(maxE>rangeEnd){const d2=new Date(maxE);rangeEnd=new Date(d2.getFullYear(),d2.getMonth()+1,0).getTime();}
+  }
+  // Find where the edit actually landed: earliest bar/milestone whose dates changed (or are new)
+  let focus=Infinity;
+  groups.forEach(function(g){g.rows.forEach(function(r){r.bars.forEach(function(b){
+    const o=oldBars[b.id];
+    if(!o||o.start!==b.start||o.end!==b.end)focus=Math.min(focus,b.start);
+  });});});
+  nm.forEach(function(m){const o=oldMs[m.id];if(!o||o.date!==m.date)focus=Math.min(focus,m.date);});
+  render();autoSave();
+  if(isFinite(focus))setTimeout(function(){scrollToDate(focus);},60);
+  else if(viewSet)setTimeout(function(){scrollToDate(rangeStart);},60);
+}
+
+function scrollToDate(ts){
+  const s=document.getElementById('grid-scroll');
+  const px=t2pxSmart(ts);
+  if(px>=0)s.scrollTo({left:Math.max(0,px-s.clientWidth/3),behavior:'smooth'});
+}
+
+function showAIEditStage(s){
+  document.getElementById('aie-stage-input').style.display=(s==='input')?'block':'none';
+  document.getElementById('aie-stage-thinking').style.display=(s==='thinking')?'block':'none';
+  document.getElementById('aie-stage-error').style.display=(s==='error')?'block':'none';
+  if(s==='thinking')startAIProgress('aie-prog-fill');else stopAIProgress('aie-prog-fill');
+}
+function openAIEdit(){showAIEditStage('input');document.getElementById('aie-overlay').classList.remove('hidden');setTimeout(function(){document.getElementById('aie-input').focus();},60);}
+function closeAIEdit(){document.getElementById('aie-overlay').classList.add('hidden');}
+function showAIEditError(m){document.getElementById('aie-error-msg').textContent=m||'Something went wrong.';showAIEditStage('error');}
+
+function runAIEdit(){
+  const txt=(document.getElementById('aie-input').value||'').trim();
+  if(!txt){showAIEditError('Type what you would like to change first.');return;}
+  showAIEditStage('thinking');
+  const msg='CURRENT TIMELINE:\n'+JSON.stringify(tlStateForAI())+'\n\nINSTRUCTION:\n'+txt;
+  callClaudeTL(TIMELINE_EDIT_PROMPT,msg,8000,function(out){
+    let data;
+    try{data=JSON.parse(cleanAIJSON(out));}catch(e){showAIEditError('The AI reply could not be read. Please try again.');return;}
+    if(data&&data.note&&!data.phases){showAIEditError(String(data.note));return;}
+    try{applyAIEdit(data);}catch(e){showAIEditError('The AI returned an unusable timeline — nothing was changed. Try rephrasing.');return;}
+    document.getElementById('aie-input').value='';
+    closeAIEdit();
+  },function(err){showAIEditError(err||'Something went wrong calling the AI. Check your connection and try again.');});
+}
+
+document.getElementById('btn-ai-edit').addEventListener('click',openAIEdit);
+document.getElementById('aie-cancel').addEventListener('click',closeAIEdit);
+document.getElementById('aie-go').addEventListener('click',runAIEdit);
+document.getElementById('aie-back').addEventListener('click',function(){showAIEditStage('input');});
+document.getElementById('aie-overlay').addEventListener('click',function(e){if(e.target===document.getElementById('aie-overlay'))closeAIEdit();});
+document.getElementById('aie-input').addEventListener('keydown',function(e){e.stopPropagation();if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();runAIEdit();}});
 
 // pdf.js worker
 if(typeof pdfjsLib!=='undefined'){try{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}catch(e){}}
@@ -2261,7 +2840,7 @@ document.getElementById('lib-overlay').addEventListener('click',function(e){if(e
 // ═══════════════════════════════════════════════════════════════════
 const OB_KEY='sc-tt-onboarded-v1';
 const OB_CARDS=[
-  {title:'Welcome to the Timeline Tool',body:'Build a clean, visual project timeline in minutes \u2014 phases, tasks, dates and milestones \u2014 ready to share with your team or your client.'},
+  {title:'Welcome to the<br>Timeline Tool',body:'Build a clean, visual project timeline in minutes \u2014 phases, tasks, dates and milestones \u2014 ready to share with your team or your client.'},
   {title:'Lay out your plan',body:'Add phases and tasks down the left, then drag across the grid to draw a time bar. Drag a bar to move or re-time it, and drop a milestone on any key date.'},
   {title:'Set the date range',body:'Use Add Date Range to set the span your timeline covers \u2014 it defaults to the next twelve months. Switch Day / Week / Month / Quarter to zoom in or out.'},
   {title:'Save to the SC library',body:'Open the Library to save a timeline to your shared team library \u2014 reopen it any time, or duplicate one as a template. Everyone signed in sees the same library.'},
@@ -2269,13 +2848,24 @@ const OB_CARDS=[
   {title:'Let AI do the heavy lifting',body:'Got a brief or some notes? Let AI Populate build the first draft \u2014 phases, tasks, rough dates and milestones \u2014 then fine-tune by dragging. Or jump straight in with a blank board.',final:true}
 ];
 let obIdx=0, obBuilt=false;
+// Reset to a fresh blank board (used by the onboarding "Start blank" button)
+function startBlankBoard(){
+  commitNow(); // keep an undo point in case it was a mistake
+  seedData();
+  startYear=new Date().getFullYear();
+  startMonth=new Date().getMonth();
+  selectedBarId=null;selectedMilestoneId=null;editingBarId=null;_newBarId=null;
+  var cn=document.getElementById('client-name');if(cn)cn.textContent='Project Name';
+  var fc=document.getElementById('footer-client');if(fc)fc.textContent='';
+  render();autoSave();
+}
 function buildOnboard(){
   if(obBuilt)return;
   const track=document.getElementById('ob-track');track.innerHTML='';
   OB_CARDS.forEach(function(c,i){
     const sl=document.createElement('div');sl.className='onboard-slide';
     const eb=document.createElement('div');eb.className='onboard-eyebrow';eb.textContent='STEP '+String(i+1).padStart(2,'0');
-    const ti=document.createElement('div');ti.className='onboard-title';ti.textContent=c.title;
+    const ti=document.createElement('div');ti.className='onboard-title';ti.innerHTML=c.title;
     const bo=document.createElement('div');bo.className='onboard-body';bo.textContent=c.body;
     sl.appendChild(eb);sl.appendChild(ti);sl.appendChild(bo);track.appendChild(sl);
   });
@@ -2287,7 +2877,13 @@ function updateNav(){
   const c=OB_CARDS[obIdx];
   const nav=document.getElementById('ob-nav');nav.innerHTML='';
   if(c.final){
-    const go=document.createElement('button');go.className='ob-btn ghost';go.textContent='Start blank';go.onclick=finishOnboard;nav.appendChild(go);
+    const go=document.createElement('button');go.className='ob-btn ghost';go.textContent='Start blank';
+    go.onclick=function(){
+      const hasContent=milestones.length||groups.some(g=>(g.name&&g.name.trim())||g.rows.some(r=>(r.name&&r.name.trim())||(r.bars&&r.bars.length)));
+      if(hasContent && !confirm('Start a new blank timeline? This clears the current board. (Timelines saved to your Library are not affected.)')){ finishOnboard(); return; }
+      startBlankBoard();finishOnboard();
+    };
+    nav.appendChild(go);
     const ai=document.createElement('button');ai.className='ob-btn';ai.textContent='Populate with AI \u2192';ai.onclick=function(){finishOnboard();openAIPopup();};nav.appendChild(ai);
   }else{
     const sk=document.createElement('button');sk.className='onboard-skip';sk.textContent='Skip';sk.onclick=finishOnboard;nav.appendChild(sk);
@@ -2337,10 +2933,10 @@ try{document.getElementById('client-name').contentEditable=READONLY?'false':'tru
 // Restore state: embedded export > localStorage > seed data
 let _restored=false;
 if(window.__SC_STATE__){
-  try{const s=JSON.parse(window.__SC_STATE__);groups=s.groups;nextId=s.nextId;viewMode=s.viewMode||'day';startYear=s.startYear;startMonth=s.startMonth;milestones=s.milestones||[];rangeStart=s.rangeStart||rangeStart;rangeEnd=s.rangeEnd||rangeEnd;_restored=true;}catch(e){}
+  try{const s=JSON.parse(window.__SC_STATE__);groups=s.groups;nextId=s.nextId;viewMode=s.viewMode||'day';startYear=s.startYear;startMonth=s.startMonth;milestones=s.milestones||[];emojiLegend=s.emojiLegend||{};rangeStart=s.rangeStart||rangeStart;rangeEnd=s.rangeEnd||rangeEnd;_restored=true;}catch(e){}
 }
 if(!_restored){
-  try{const raw=localStorage.getItem('sc-timeline-state-v4');if(raw){const s=JSON.parse(raw);groups=s.groups;nextId=s.nextId;viewMode=s.viewMode||'day';startYear=s.startYear;startMonth=s.startMonth;milestones=s.milestones||[];rangeStart=s.rangeStart||rangeStart;rangeEnd=s.rangeEnd||rangeEnd;_restored=true;}}catch(e){}
+  try{const raw=localStorage.getItem('sc-timeline-state-v4');if(raw){const s=JSON.parse(raw);groups=s.groups;nextId=s.nextId;viewMode=s.viewMode||'day';startYear=s.startYear;startMonth=s.startMonth;milestones=s.milestones||[];emojiLegend=s.emojiLegend||{};rangeStart=s.rangeStart||rangeStart;rangeEnd=s.rangeEnd||rangeEnd;_restored=true;}}catch(e){}
 }
 if(!_restored){
   seedData();
@@ -2359,6 +2955,29 @@ try{
 // Sync view mode buttons
 ['day','week','month','quarter'].forEach(v=>document.getElementById('btn-'+v).classList.toggle('active',v===viewMode));
 
+// ── Resizable Phases & Tasks column ──
+(function(){
+  try{var saved=localStorage.getItem('sc-tl-sidebar-w');if(saved)document.documentElement.style.setProperty('--sidebar-w',saved);}catch(e){}
+  var rez=document.getElementById('sidebar-resizer');if(!rez)return;
+  var dragging=false;
+  rez.addEventListener('mousedown',function(e){
+    e.preventDefault();dragging=true;rez.classList.add('dragging');
+    document.body.style.cursor='col-resize';document.body.style.userSelect='none';
+  });
+  window.addEventListener('mousemove',function(e){
+    if(!dragging)return;
+    var ab=document.querySelector('.app-body').getBoundingClientRect();
+    var w=Math.max(180,Math.min(620,e.clientX-ab.left));
+    document.documentElement.style.setProperty('--sidebar-w',w+'px');
+    if(window.updateHScroll)window.updateHScroll();
+  });
+  window.addEventListener('mouseup',function(){
+    if(!dragging)return;dragging=false;rez.classList.remove('dragging');
+    document.body.style.cursor='';document.body.style.userSelect='';
+    try{localStorage.setItem('sc-tl-sidebar-w',getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w').trim());}catch(e){}
+  });
+})();
+
 render();
 setTimeout(scrollToToday,100);
 </script>
@@ -2368,23 +2987,23 @@ setTimeout(scrollToToday,100);
   ov.textContent='Loading timeline…';
   document.body.appendChild(ov);
   function err(m){ov.textContent=m;}
-  var CFG={apiKey:"AIzaSyBBx2xU_3tvcw0A2aIs0iNEnJrilvlHN2w",authDomain:"sc-timelines.firebaseapp.com",projectId:"sc-timelines",storageBucket:"sc-timelines.firebasestorage.app",messagingSenderId:"653446187626",appId:"1:653446187626:web:8b0c84fd5808b112941813"};
+  var SB_URL="https://fdfrziuuqagvmbjhvjde.supabase.co";
+  var SB_KEY="sb_publishable_bVhMFzlTqo2IHwmsc9IA8g_sdt7I_Ch";
   function go(){
-    if(typeof firebase==='undefined'){err('The viewer could not load (scripts from gstatic.com may be blocked). Try another browser or refresh.');return;}
-    try{ if(!firebase.apps||!firebase.apps.length){firebase.initializeApp(CFG);} }catch(e){}
-    var db;
-    try{ db=firebase.firestore(); }catch(e){ err('Viewer database error: '+((e&&e.message)||e)); return; }
+    if(typeof window.supabase==='undefined'||!window.supabase.createClient){err('The viewer could not load (scripts may be blocked). Try another browser or refresh.');return;}
+    var sb;
+    try{ sb=window.supabase.createClient(SB_URL,SB_KEY); }catch(e){ err('Viewer database error: '+((e&&e.message)||e)); return; }
     var id=new URLSearchParams(location.search).get('id');
     if(!id){err('No timeline specified.');return;}
-    db.collection('public_timelines').doc(id).get().then(function(s){
-      if(!s.exists){err('This timeline link is no longer available.');return;}
-      var d=s.data();
+    sb.from('public_timelines').select('state,client').eq('id',id).single().then(function(r){
+      if(r.error||!r.data){err('This timeline link is no longer available.');return;}
+      var d=r.data;
       if(d.state){try{applyState(d.state);}catch(e){err('Could not display this timeline.');return;}}
       if(d.client){var cn=document.getElementById('client-name');if(cn){cn.textContent=d.client;var fc=document.getElementById('footer-client');if(fc)fc.textContent=String(d.client).toUpperCase();}}
       ov.remove();
-    }).catch(function(e){err('Could not load this timeline: '+((e&&e.message)||e));});
+    },function(e){err('Could not load this timeline: '+((e&&e.message)||e));});
   }
-  if(typeof firebase!=='undefined'){go();}else{setTimeout(go,800);}
+  if(typeof window.supabase!=='undefined'){go();}else{setTimeout(go,800);}
 })();</script>
 </body>
 </html>

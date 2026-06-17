@@ -544,29 +544,47 @@ body.readonly .grid-scroll{cursor:default;}
 body.readonly .bar{cursor:default!important;}
 body.readonly .milestone-marker{cursor:default!important;}
 body.readonly .hub-client-input{cursor:default;}
-.lib-save{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
-.lib-save .field-input{padding:8px 10px;}
-.lib-list{max-height:46vh;overflow:auto;display:flex;flex-direction:column;gap:8px;}
-.lib-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:7px;background:var(--white);}
-.lib-item-main{flex:1;min-width:0;}
-.lib-item-name{font-family:var(--body);font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.lib-item-meta{font-family:var(--mono);font-size:8.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--t-tertiary);margin-top:3px;}
-.lib-tag{display:inline-block;padding:1px 6px;border-radius:3px;background:var(--bw);margin-right:5px;}
-.lib-actions{display:flex;gap:4px;flex-shrink:0;}
-.lib-btn{font-family:var(--mono);font-size:8.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--t-secondary);background:none;border:1px solid var(--border);border-radius:4px;padding:5px 9px;cursor:pointer;}
-.lib-btn:hover{background:var(--bw);color:var(--ink);}
-.lib-btn.del:hover{background:rgba(180,0,0,0.08);color:rgba(180,0,0,0.85);border-color:rgba(180,0,0,0.2);}
-.lib-empty{text-align:center;color:var(--t-tertiary);font-family:var(--body);font-size:13px;padding:24px;}
-.lib-search{width:100%;margin-bottom:12px;}
-.lib-folder{border:1px solid var(--border);border-radius:7px;background:var(--white);overflow:hidden;}
-.lib-fhead{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;user-select:none;}
-.lib-fhead:hover{background:var(--bw);}
-.lib-fcaret{font-size:8px;color:var(--t-tertiary);transition:transform .15s;width:9px;display:inline-block;}
-.lib-folder.collapsed .lib-fcaret{transform:rotate(-90deg);}
-.lib-fname{flex:1;font-family:var(--body);font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.lib-fcount{font-family:var(--mono);font-size:8.5px;letter-spacing:0.08em;color:var(--t-tertiary);background:var(--bw);border-radius:20px;padding:3px 8px;flex-shrink:0;}
-.lib-fbody{display:flex;flex-direction:column;gap:6px;padding:0 8px 8px;}
-.lib-folder.collapsed .lib-fbody{display:none;}
+/* ── Timeline Library — matched to the Proposal Builder library look ── */
+.lib-card{width:760px;max-width:94vw;max-height:86vh;display:flex;flex-direction:column;padding:34px 40px 26px;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,0.18);}
+.plib-label{font-family:'BoldNeue-Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(0,0,0,0.35);text-align:center;margin-bottom:10px;}
+.plib-title{font-family:'BoldNeue-Normal',sans-serif;font-weight:300;font-size:22px;letter-spacing:-0.02em;text-align:center;color:#000;margin-bottom:18px;}
+.lib-save{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;}
+.lib-save .field-input,.lib-save select.field-input{padding:9px 11px;}
+.plib-controls{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+.plib-search{width:100%;font-family:'SuisseIntl',sans-serif;font-size:13px;padding:11px 14px;border:1px solid rgba(0,0,0,.12);border-radius:10px;background:#fff;outline:none;box-sizing:border-box;transition:border-color .18s;}
+.plib-search:focus{border-color:#9500FF;}
+.plib-toolbar{display:flex;gap:6px;align-items:center;}
+.plib-sort{font-family:'BoldNeue-Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:rgba(0,0,0,.55);background:rgba(0,0,0,.05);border:1px solid transparent;border-radius:20px;padding:6px 10px;cursor:pointer;outline:none;}
+.plib-newfolder{font-family:'BoldNeue-Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#9500FF;background:rgba(149,0,255,0.08);border:1px solid rgba(149,0,255,0.3);border-radius:20px;padding:6px 11px;cursor:pointer;white-space:nowrap;}
+.plib-newfolder:hover{background:rgba(149,0,255,0.14);}
+.plib-list{height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px;}
+.plib-msg{font-family:'BoldNeue-Mono',monospace;font-size:8.5px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(0,0,0,0.35);line-height:2;text-align:center;margin:auto;}
+.plib-row{display:flex;align-items:center;gap:12px;border:1px solid rgba(0,0,0,0.09);border-radius:10px;padding:12px 16px;transition:border-color .18s,box-shadow .18s;}
+.plib-row:hover{border-color:rgba(149,0,255,0.4);box-shadow:0 4px 18px rgba(149,0,255,0.1);}
+.plib-rmain{flex:1;min-width:0;}
+.plib-rtitle{font-family:'BoldNeue-Normal',sans-serif;font-size:13px;letter-spacing:-0.01em;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.plib-rmeta{font-family:'BoldNeue-Mono',monospace;font-size:7.5px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(0,0,0,0.35);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.plib-rtag{display:inline-block;margin-right:6px;color:rgba(0,0,0,0.5);}
+.plib-actions{display:flex;gap:6px;flex-shrink:0;}
+.plib-act{font-family:'BoldNeue-Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.55);background:none;border:1px solid rgba(0,0,0,.16);border-radius:20px;padding:6px 10px;cursor:pointer;transition:all .15s;}
+.plib-act:hover{border-color:rgba(0,0,0,.4);color:#000;}
+.plib-act.open{background:#9500FF;border-color:#9500FF;color:#fff;}
+.plib-act.open:hover{background:#7a00cc;}
+.plib-act.del:hover{border-color:#FF3333;color:#FF3333;}
+.plib-folder{display:flex;flex-direction:column;}
+.plib-fhead{display:flex;align-items:center;gap:9px;padding:9px 6px 9px 4px;cursor:pointer;user-select:none;border-bottom:1px solid rgba(0,0,0,0.06);margin-bottom:2px;}
+.plib-fhead:hover .plib-fname{color:#000;}
+.plib-fcaret{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid rgba(0,0,0,0.4);transition:transform .15s;flex-shrink:0;transform-origin:50% 35%;}
+.plib-folder.collapsed .plib-fcaret{transform:rotate(-90deg);}
+.plib-fname{flex:1;font-family:'BoldNeue-Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(0,0,0,0.55);transition:color .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.plib-fcount{font-family:'BoldNeue-Mono',monospace;font-size:8px;letter-spacing:0.1em;color:rgba(0,0,0,0.3);background:rgba(0,0,0,0.05);border-radius:20px;padding:3px 8px;flex-shrink:0;}
+.plib-fact{font-family:'BoldNeue-Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.4);background:none;border:none;cursor:pointer;padding:3px 5px;flex-shrink:0;opacity:0;transition:opacity .15s,color .15s;}
+.plib-fhead:hover .plib-fact{opacity:1;}
+.plib-fact:hover{color:#000;}
+.plib-fact.del:hover{color:#FF3333;}
+.plib-fbody{display:flex;flex-direction:column;gap:8px;padding:6px 0 12px;}
+.plib-folder.collapsed .plib-fbody{display:none;}
+.lib-empty{text-align:center;color:rgba(0,0,0,0.35);font-family:'BoldNeue-Mono',monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;padding:24px;}
 body.readonly #btn-milestone{display:none!important;}
 .hscroll{height:16px;flex-shrink:0;background:rgba(0,0,0,0.05);border-top:1px solid var(--border);position:relative;}
 .hscroll-thumb{position:absolute;top:3px;left:0;height:10px;width:80px;min-width:40px;background:rgba(0,0,0,0.3);border-radius:5px;cursor:grab;transition:background 0.12s;}
@@ -710,19 +728,27 @@ body.readonly #btn-guide{display:none!important;}
 </div>
 <!-- ═══ LIBRARY MODAL ═══ -->
 <div class="overlay hidden" id="lib-overlay">
-<div class="popup" style="width:580px;max-width:94vw;">
-<div class="popup-title">▤ Timeline Library</div>
-<div id="lib-status" class="range-note" style="margin-bottom:12px;"></div>
+<div class="popup lib-card">
+<div class="plib-label">Timeline Library</div>
+<div class="plib-title">Save &amp; open timelines</div>
+<div id="lib-status" class="range-note" style="margin-bottom:12px;text-align:center;"></div>
 <button class="btn-primary" id="lib-signin" style="display:none;margin-bottom:14px;">Sign in with Google</button>
 <div class="lib-save">
-<input class="field-input" id="lib-name" type="text" placeholder="Name this timeline…" style="flex:2;min-width:160px;">
-<select class="field-input" id="lib-kind" style="flex:1;min-width:90px;"><option value="client">Client</option><option value="template">Template</option></select>
-<select class="field-input" id="lib-type" style="flex:1;min-width:90px;"><option value="">Type…</option><option>Brand</option><option>Campaign</option><option>Marketing</option><option>Digital</option><option>Experience</option><option>Other</option></select>
+<input class="field-input" id="lib-name" type="text" placeholder="Name this timeline…" style="flex:2;min-width:150px;">
+<select class="field-input" id="lib-kind" style="flex:1;min-width:88px;"><option value="client">Client</option><option value="template">Template</option></select>
+<select class="field-input" id="lib-type" style="flex:1;min-width:88px;"><option value="">Type…</option><option>Brand</option><option>Campaign</option><option>Marketing</option><option>Digital</option><option>Experience</option><option>Other</option></select>
+<select class="field-input" id="lib-folder" style="flex:1;min-width:120px;"></select>
 <button class="btn-primary" id="lib-save-btn">Save current</button>
 </div>
-<input class="field-input lib-search" id="lib-search" type="text" placeholder="Search timelines or clients…">
-<div id="lib-list" class="lib-list"></div>
-<div class="popup-actions"><button class="btn-cancel" id="lib-close">Close</button></div>
+<div class="plib-controls">
+<input class="plib-search" id="lib-search" type="text" placeholder="Search by name or client…">
+<div class="plib-toolbar">
+<select id="lib-sort" class="plib-sort"><option value="updated">Recently updated</option><option value="name">Name A&ndash;Z</option></select>
+<button class="plib-newfolder" id="lib-newfolder">+ New client folder</button>
+</div>
+</div>
+<div id="lib-list" class="plib-list"></div>
+<div class="popup-actions" style="margin-top:18px;"><button class="btn-cancel" id="lib-close">Close</button></div>
 </div>
 </div>
 <!-- ═══ AI POPULATE MODAL ═══ -->
@@ -2696,7 +2722,14 @@ const LocalStore = {
   signIn(){return Promise.resolve(null);},
   list(){return Promise.resolve(this._all().slice().sort((a,b)=>b.updated-a.updated));},
   save(entry){const a=this._all();const i=a.findIndex(x=>x.id===entry.id);if(i>=0)a[i]=entry;else a.push(entry);this._w(a);return Promise.resolve(entry);},
-  remove(id){this._w(this._all().filter(x=>x.id!==id));return Promise.resolve();}
+  remove(id){this._w(this._all().filter(x=>x.id!==id));return Promise.resolve();},
+  _fk:'sc-tl-folders-v1',
+  _fall(){try{return JSON.parse(localStorage.getItem(this._fk)||'[]');}catch(e){return[];}},
+  _fw(a){try{localStorage.setItem(this._fk,JSON.stringify(a));}catch(e){}},
+  folders(){return Promise.resolve(this._fall());},
+  addFolder(name){var a=this._fall();if(a.indexOf(name)<0){a.push(name);this._fw(a);}return Promise.resolve(true);},
+  renameFolder(o,n){this._fw(this._fall().map(x=>x===o?n:x));var all=this._all();all.forEach(function(e){if((e.client||'')===o)e.client=n;});this._w(all);return Promise.resolve(true);},
+  removeFolder(name){this._fw(this._fall().filter(x=>x!==name));return Promise.resolve(true);}
 };
 
 function _loadScripts(urls){
@@ -2751,7 +2784,11 @@ const BrokerStore={
   signIn(){return brokerCall('sc-auth-signin').then(function(u){_bk.user=u;return u;});},
   list(){return brokerCall('sc-lib-list');},
   save(entry){return brokerCall('sc-lib-save',{entry:entry}).then(function(){return entry;});},
-  remove(id){return brokerCall('sc-lib-remove',{id:id});}
+  remove(id){return brokerCall('sc-lib-remove',{id:id});},
+  folders(){return brokerCall('sc-folder-list',{tool:'timeline'});},
+  addFolder(name){return brokerCall('sc-folder-add',{tool:'timeline',name:name});},
+  renameFolder(o,n){return brokerCall('sc-folder-rename',{tool:'timeline',old:o,'new':n});},
+  removeFolder(name){return brokerCall('sc-folder-remove',{tool:'timeline',name:name});}
 };
 const TimelineStore = IN_HUB ? BrokerStore : ((SC_FIREBASE_CONFIG && SC_FIREBASE_CONFIG.projectId) ? makeCloudStore(SC_FIREBASE_CONFIG) : LocalStore);
 
@@ -2777,32 +2814,51 @@ function refreshLibStatus(){
 }
 function loadLibList(){
   const list=document.getElementById('lib-list');
-  list.innerHTML='<div class="lib-empty">Loading…</div>';
-  Promise.resolve(TimelineStore.ready()).then(function(){return TimelineStore.list();}).then(function(items){renderLibList(items);}).catch(function(e){
-    list.innerHTML='<div class="lib-empty">'+((TimelineStore.mode==='cloud'&&!(TimelineStore.user&&TimelineStore.user()))?'Sign in to load the team library.':'Could not load library: '+(e.message||e))+'</div>';
+  list.innerHTML='<div class="plib-msg">Loading…</div>';
+  Promise.resolve(TimelineStore.ready()).then(function(){
+    var fp=TimelineStore.folders?TimelineStore.folders().catch(function(){return [];}):Promise.resolve([]);
+    return Promise.all([TimelineStore.list(), fp]);
+  }).then(function(res){_libFolders=res[1]||[];populateFolderSelect();renderLibList(res[0]);}).catch(function(e){
+    list.innerHTML='<div class="plib-msg">'+((TimelineStore.mode==='cloud'&&!(TimelineStore.user&&TimelineStore.user()))?'Sign in to load the team library.':'Could not load library: '+(e.message||e))+'</div>';
   });
 }
-var _libItems=[];
+var _libItems=[], _libFolders=[];
 function libFolds(){try{return JSON.parse(localStorage.getItem('sc_tl_folds')||'{}');}catch(e){return {};}}
 function libSetFold(k,collapsed){var s=libFolds();if(collapsed)s[k]=1;else delete s[k];try{localStorage.setItem('sc_tl_folds',JSON.stringify(s));}catch(e){}}
 function libFoldKey(it){if(it.kind==='template')return '★ Templates';return (it.client||'').trim()||'Unfiled';}
+function libAllFolderNames(){
+  var names=(_libFolders||[]).slice();
+  (_libItems||[]).forEach(function(it){var c=(it.client||'').trim();if(c&&it.kind!=='template'&&names.indexOf(c)<0)names.push(c);});
+  names.sort(function(a,b){return a.toLowerCase().localeCompare(b.toLowerCase());});
+  return names;
+}
+function populateFolderSelect(){
+  var sel=document.getElementById('lib-folder');if(!sel)return;
+  var cur=(document.getElementById('client-name').textContent||'').trim();
+  var html='<option value="">Folder: current client</option>';
+  libAllFolderNames().forEach(function(n){html+='<option value="'+n.replace(/"/g,'&quot;')+'"'+(n===cur?' selected':'')+'>'+n.replace(/</g,'&lt;')+'</option>';});
+  sel.innerHTML=html;
+}
 function libRow(it){
-  const row=document.createElement('div');row.className='lib-item';
-  const main=document.createElement('div');main.className='lib-item-main';
-  const nm=document.createElement('div');nm.className='lib-item-name';nm.textContent=it.name||'Untitled';
-  const meta=document.createElement('div');meta.className='lib-item-meta';
-  const tags=[];
-  if(it.kind)tags.push('<span class="lib-tag">'+it.kind+'</span>');
-  if(it.projectType)tags.push('<span class="lib-tag">'+it.projectType+'</span>');
-  const when=it.updated?new Date(it.updated).toLocaleDateString():'';
-  meta.innerHTML=tags.join('')+(when?(tags.length?' · ':'')+when:'');
+  const row=document.createElement('div');row.className='plib-row';
+  const main=document.createElement('div');main.className='plib-rmain';
+  const nm=document.createElement('div');nm.className='plib-rtitle';nm.textContent=it.name||'Untitled';
+  const meta=document.createElement('div');meta.className='plib-rmeta';
+  const bits=[];
+  if(it.kind)bits.push('<span class="plib-rtag">'+it.kind+'</span>');
+  if(it.projectType)bits.push('<span class="plib-rtag">'+it.projectType+'</span>');
+  const when=it.updated?new Date(it.updated).toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'}):'';
+  meta.innerHTML=bits.join('')+(when?(bits.length?' &middot; ':'')+when:'');
   main.append(nm,meta);
-  const acts=document.createElement('div');acts.className='lib-actions';
-  const bOpen=document.createElement('button');bOpen.className='lib-btn';bOpen.textContent='Open';bOpen.addEventListener('click',function(){openLibraryEntry(it);});
-  const bDup=document.createElement('button');bDup.className='lib-btn';bDup.textContent='Duplicate';bDup.addEventListener('click',function(){duplicateEntry(it);});
-  const bRen=document.createElement('button');bRen.className='lib-btn';bRen.textContent='Rename';bRen.addEventListener('click',function(){renameEntry(it);});
-  const bDel=document.createElement('button');bDel.className='lib-btn del';bDel.textContent='Delete';bDel.addEventListener('click',function(){deleteEntry(it);});
-  acts.append(bOpen,bDup,bRen,bDel);
+  const acts=document.createElement('div');acts.className='plib-actions';
+  function mk(label,cls,fn){var b=document.createElement('button');b.className='plib-act'+(cls?(' '+cls):'');b.textContent=label;b.addEventListener('click',fn);return b;}
+  acts.append(
+    mk('Open','open',function(){openLibraryEntry(it);}),
+    mk('Move','',function(){libMoveEntry(it);}),
+    mk('Duplicate','',function(){duplicateEntry(it);}),
+    mk('Rename','',function(){renameEntry(it);}),
+    mk('Delete','del',function(){deleteEntry(it);})
+  );
   row.append(main,acts);
   return row;
 }
@@ -2810,16 +2866,22 @@ function renderLibList(items){_libItems=items||[];libRender();}
 function libRender(){
   const list=document.getElementById('lib-list');
   list.innerHTML='';
-  if(!_libItems.length){list.innerHTML='<div class="lib-empty">No saved timelines yet. Name one above and hit Save current.</div>';return;}
   const se=document.getElementById('lib-search');
   const q=(se&&se.value||'').toLowerCase().trim();
-  const items=_libItems.filter(function(it){
+  const items=(_libItems||[]).filter(function(it){
     if(!q)return true;
     return ((it.name||'')+' '+(it.client||'')+' '+(it.projectType||'')+' '+(it.kind||'')).toLowerCase().indexOf(q)>=0;
   });
-  if(!items.length){list.innerHTML='<div class="lib-empty">No timelines match your search.</div>';return;}
+  const sortBy=(document.getElementById('lib-sort')||{}).value||'updated';
+  items.sort(function(a,b){
+    if(sortBy==='name')return String(a.name||'').toLowerCase().localeCompare(String(b.name||'').toLowerCase());
+    return (b.updated||0)-(a.updated||0);
+  });
   const groups={},order=[];
-  items.forEach(function(it){const k=libFoldKey(it);if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(it);});
+  function ensure(k){if(!groups[k]){groups[k]=[];order.push(k);}}
+  if(!q)(_libFolders||[]).forEach(function(n){if(n)ensure(n);});
+  items.forEach(function(it){const k=libFoldKey(it);ensure(k);groups[k].push(it);});
+  if(!order.length){list.innerHTML='<div class="plib-msg">'+(q?'No timelines match your search.':'No saved timelines yet. Name one above and hit Save current.')+'</div>';return;}
   order.sort(function(a,b){
     const ra=(a==='★ Templates')?2:(a==='Unfiled'?1:0),rb=(b==='★ Templates')?2:(b==='Unfiled'?1:0);
     if(ra!==rb)return ra-rb;
@@ -2827,27 +2889,58 @@ function libRender(){
   });
   const folds=libFolds();
   order.forEach(function(k){
-    const fold=document.createElement('div');fold.className='lib-folder';
+    const fold=document.createElement('div');fold.className='plib-folder';
     if(!q&&folds[k])fold.classList.add('collapsed');
-    const head=document.createElement('div');head.className='lib-fhead';
-    const caret=document.createElement('span');caret.className='lib-fcaret';caret.textContent='▼';
-    const fname=document.createElement('span');fname.className='lib-fname';fname.textContent=k;
-    const fcount=document.createElement('span');fcount.className='lib-fcount';fcount.textContent=groups[k].length;
+    const head=document.createElement('div');head.className='plib-fhead';
+    const caret=document.createElement('span');caret.className='plib-fcaret';
+    const fname=document.createElement('span');fname.className='plib-fname';fname.textContent=k;
+    const fcount=document.createElement('span');fcount.className='plib-fcount';fcount.textContent=groups[k].length;
     head.append(caret,fname,fcount);
+    if(k!=='Unfiled'&&k!=='★ Templates'){
+      const bren=document.createElement('button');bren.className='plib-fact';bren.textContent='Rename';bren.addEventListener('click',function(e){e.stopPropagation();libRenameFolder(k);});
+      head.appendChild(bren);
+      if(groups[k].length===0){const bdel=document.createElement('button');bdel.className='plib-fact del';bdel.textContent='Delete';bdel.addEventListener('click',function(e){e.stopPropagation();libDeleteFolder(k);});head.appendChild(bdel);}
+    }
     head.addEventListener('click',function(){const c=fold.classList.toggle('collapsed');libSetFold(k,c);});
-    const body=document.createElement('div');body.className='lib-fbody';
-    groups[k].forEach(function(it){body.appendChild(libRow(it));});
+    const body=document.createElement('div');body.className='plib-fbody';
+    if(groups[k].length){groups[k].forEach(function(it){body.appendChild(libRow(it));});}
+    else{const em=document.createElement('div');em.className='plib-rmeta';em.style.cssText='padding:6px 4px;opacity:.5;';em.textContent='Empty — save or move a timeline here.';body.appendChild(em);}
     fold.append(head,body);
     list.appendChild(fold);
   });
 }
+function libNewFolder(){
+  var n=prompt('New client folder name:');if(n===null)return;n=n.trim();if(!n)return;
+  if(!TimelineStore.addFolder){alert('Folders are unavailable here.');return;}
+  TimelineStore.addFolder(n).then(loadLibList).catch(function(e){alert('Could not add folder: '+(e.message||e));});
+}
+function libRenameFolder(oldN){
+  var n=prompt('Rename client folder "'+oldN+'" to:',oldN);if(n===null)return;n=n.trim();if(!n||n===oldN)return;
+  TimelineStore.renameFolder(oldN,n).then(loadLibList).catch(function(e){alert('Could not rename: '+(e.message||e));});
+}
+function libDeleteFolder(name){
+  if(!confirm('Delete the empty folder "'+name+'"?'))return;
+  TimelineStore.removeFolder(name).then(loadLibList).catch(function(e){alert('Could not delete: '+(e.message||e));});
+}
+function libMoveEntry(it){
+  var names=libAllFolderNames();
+  var msg='Move "'+(it.name||'this timeline')+'" to which client folder?\n\nType a name (existing or new), or leave blank for Unfiled.';
+  if(names.length)msg+='\n\nExisting: '+names.join(', ');
+  var n=prompt(msg,(it.client||''));if(n===null)return;n=n.trim();
+  var upd=Object.assign({},it,{client:n,updated:Date.now()});
+  if(n&&it.kind==='template')upd.kind='client';
+  var apply=function(){TimelineStore.save(upd).then(loadLibList).catch(function(e){alert('Could not move: '+(e.message||e));});};
+  if(n&&names.indexOf(n)<0&&TimelineStore.addFolder){TimelineStore.addFolder(n).then(apply).catch(apply);}else{apply();}
+}
 function saveCurrent(){
+  var folderSel=(document.getElementById('lib-folder')||{}).value||'';
+  var client=folderSel||document.getElementById('client-name').textContent.trim();
   const entry={
     id:_libId(),
     name:(document.getElementById('lib-name').value.trim()||'Untitled timeline'),
     kind:document.getElementById('lib-kind').value,
     projectType:document.getElementById('lib-type').value,
-    client:document.getElementById('client-name').textContent.trim(),
+    client:client,
     state:snapState(),
     updated:Date.now(),
     owner:(TimelineStore.user&&TimelineStore.user())?TimelineStore.user().email:null
@@ -2880,6 +2973,8 @@ document.getElementById('btn-library').addEventListener('click',openLibrary);
 document.getElementById('lib-close').addEventListener('click',closeLibrary);
 document.getElementById('lib-save-btn').addEventListener('click',saveCurrent);
 document.getElementById('lib-search').addEventListener('input',libRender);
+document.getElementById('lib-sort').addEventListener('change',libRender);
+document.getElementById('lib-newfolder').addEventListener('click',libNewFolder);
 document.getElementById('lib-signin').addEventListener('click',function(){TimelineStore.signIn().then(function(){refreshLibStatus();loadLibList();}).catch(function(e){alert('Sign-in failed: '+(e.message||e));});});
 document.getElementById('lib-overlay').addEventListener('click',function(e){if(e.target===document.getElementById('lib-overlay'))closeLibrary();});
 

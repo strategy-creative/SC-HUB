@@ -557,6 +557,16 @@ body.readonly .hub-client-input{cursor:default;}
 .lib-btn:hover{background:var(--bw);color:var(--ink);}
 .lib-btn.del:hover{background:rgba(180,0,0,0.08);color:rgba(180,0,0,0.85);border-color:rgba(180,0,0,0.2);}
 .lib-empty{text-align:center;color:var(--t-tertiary);font-family:var(--body);font-size:13px;padding:24px;}
+.lib-search{width:100%;margin-bottom:12px;}
+.lib-folder{border:1px solid var(--border);border-radius:7px;background:var(--white);overflow:hidden;}
+.lib-fhead{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;user-select:none;}
+.lib-fhead:hover{background:var(--bw);}
+.lib-fcaret{font-size:8px;color:var(--t-tertiary);transition:transform .15s;width:9px;display:inline-block;}
+.lib-folder.collapsed .lib-fcaret{transform:rotate(-90deg);}
+.lib-fname{flex:1;font-family:var(--body);font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lib-fcount{font-family:var(--mono);font-size:8.5px;letter-spacing:0.08em;color:var(--t-tertiary);background:var(--bw);border-radius:20px;padding:3px 8px;flex-shrink:0;}
+.lib-fbody{display:flex;flex-direction:column;gap:6px;padding:0 8px 8px;}
+.lib-folder.collapsed .lib-fbody{display:none;}
 body.readonly #btn-milestone{display:none!important;}
 .hscroll{height:16px;flex-shrink:0;background:rgba(0,0,0,0.05);border-top:1px solid var(--border);position:relative;}
 .hscroll-thumb{position:absolute;top:3px;left:0;height:10px;width:80px;min-width:40px;background:rgba(0,0,0,0.3);border-radius:5px;cursor:grab;transition:background 0.12s;}
@@ -710,6 +720,7 @@ body.readonly #btn-guide{display:none!important;}
 <select class="field-input" id="lib-type" style="flex:1;min-width:90px;"><option value="">Type…</option><option>Brand</option><option>Campaign</option><option>Marketing</option><option>Digital</option><option>Experience</option><option>Other</option></select>
 <button class="btn-primary" id="lib-save-btn">Save current</button>
 </div>
+<input class="field-input lib-search" id="lib-search" type="text" placeholder="Search timelines or clients…">
 <div id="lib-list" class="lib-list"></div>
 <div class="popup-actions"><button class="btn-cancel" id="lib-close">Close</button></div>
 </div>
@@ -2771,30 +2782,63 @@ function loadLibList(){
     list.innerHTML='<div class="lib-empty">'+((TimelineStore.mode==='cloud'&&!(TimelineStore.user&&TimelineStore.user()))?'Sign in to load the team library.':'Could not load library: '+(e.message||e))+'</div>';
   });
 }
-function renderLibList(items){
+var _libItems=[];
+function libFolds(){try{return JSON.parse(localStorage.getItem('sc_tl_folds')||'{}');}catch(e){return {};}}
+function libSetFold(k,collapsed){var s=libFolds();if(collapsed)s[k]=1;else delete s[k];try{localStorage.setItem('sc_tl_folds',JSON.stringify(s));}catch(e){}}
+function libFoldKey(it){if(it.kind==='template')return '★ Templates';return (it.client||'').trim()||'Unfiled';}
+function libRow(it){
+  const row=document.createElement('div');row.className='lib-item';
+  const main=document.createElement('div');main.className='lib-item-main';
+  const nm=document.createElement('div');nm.className='lib-item-name';nm.textContent=it.name||'Untitled';
+  const meta=document.createElement('div');meta.className='lib-item-meta';
+  const tags=[];
+  if(it.kind)tags.push('<span class="lib-tag">'+it.kind+'</span>');
+  if(it.projectType)tags.push('<span class="lib-tag">'+it.projectType+'</span>');
+  const when=it.updated?new Date(it.updated).toLocaleDateString():'';
+  meta.innerHTML=tags.join('')+(when?(tags.length?' · ':'')+when:'');
+  main.append(nm,meta);
+  const acts=document.createElement('div');acts.className='lib-actions';
+  const bOpen=document.createElement('button');bOpen.className='lib-btn';bOpen.textContent='Open';bOpen.addEventListener('click',function(){openLibraryEntry(it);});
+  const bDup=document.createElement('button');bDup.className='lib-btn';bDup.textContent='Duplicate';bDup.addEventListener('click',function(){duplicateEntry(it);});
+  const bRen=document.createElement('button');bRen.className='lib-btn';bRen.textContent='Rename';bRen.addEventListener('click',function(){renameEntry(it);});
+  const bDel=document.createElement('button');bDel.className='lib-btn del';bDel.textContent='Delete';bDel.addEventListener('click',function(){deleteEntry(it);});
+  acts.append(bOpen,bDup,bRen,bDel);
+  row.append(main,acts);
+  return row;
+}
+function renderLibList(items){_libItems=items||[];libRender();}
+function libRender(){
   const list=document.getElementById('lib-list');
   list.innerHTML='';
-  if(!items.length){list.innerHTML='<div class="lib-empty">No saved timelines yet. Name one above and hit Save current.</div>';return;}
-  items.forEach(function(it){
-    const row=document.createElement('div');row.className='lib-item';
-    const main=document.createElement('div');main.className='lib-item-main';
-    const nm=document.createElement('div');nm.className='lib-item-name';nm.textContent=it.name||'Untitled';
-    const meta=document.createElement('div');meta.className='lib-item-meta';
-    const tags=[];
-    if(it.kind)tags.push('<span class="lib-tag">'+it.kind+'</span>');
-    if(it.projectType)tags.push('<span class="lib-tag">'+it.projectType+'</span>');
-    if(it.client)tags.push(it.client);
-    const when=it.updated?new Date(it.updated).toLocaleDateString():'';
-    meta.innerHTML=tags.join('')+(when?(' · '+when):'');
-    main.append(nm,meta);
-    const acts=document.createElement('div');acts.className='lib-actions';
-    const bOpen=document.createElement('button');bOpen.className='lib-btn';bOpen.textContent='Open';bOpen.addEventListener('click',function(){openLibraryEntry(it);});
-    const bDup=document.createElement('button');bDup.className='lib-btn';bDup.textContent='Duplicate';bDup.addEventListener('click',function(){duplicateEntry(it);});
-    const bRen=document.createElement('button');bRen.className='lib-btn';bRen.textContent='Rename';bRen.addEventListener('click',function(){renameEntry(it);});
-    const bDel=document.createElement('button');bDel.className='lib-btn del';bDel.textContent='Delete';bDel.addEventListener('click',function(){deleteEntry(it);});
-    acts.append(bOpen,bDup,bRen,bDel);
-    row.append(main,acts);
-    list.appendChild(row);
+  if(!_libItems.length){list.innerHTML='<div class="lib-empty">No saved timelines yet. Name one above and hit Save current.</div>';return;}
+  const se=document.getElementById('lib-search');
+  const q=(se&&se.value||'').toLowerCase().trim();
+  const items=_libItems.filter(function(it){
+    if(!q)return true;
+    return ((it.name||'')+' '+(it.client||'')+' '+(it.projectType||'')+' '+(it.kind||'')).toLowerCase().indexOf(q)>=0;
+  });
+  if(!items.length){list.innerHTML='<div class="lib-empty">No timelines match your search.</div>';return;}
+  const groups={},order=[];
+  items.forEach(function(it){const k=libFoldKey(it);if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(it);});
+  order.sort(function(a,b){
+    const ra=(a==='★ Templates')?2:(a==='Unfiled'?1:0),rb=(b==='★ Templates')?2:(b==='Unfiled'?1:0);
+    if(ra!==rb)return ra-rb;
+    return a.toLowerCase().localeCompare(b.toLowerCase());
+  });
+  const folds=libFolds();
+  order.forEach(function(k){
+    const fold=document.createElement('div');fold.className='lib-folder';
+    if(!q&&folds[k])fold.classList.add('collapsed');
+    const head=document.createElement('div');head.className='lib-fhead';
+    const caret=document.createElement('span');caret.className='lib-fcaret';caret.textContent='▼';
+    const fname=document.createElement('span');fname.className='lib-fname';fname.textContent=k;
+    const fcount=document.createElement('span');fcount.className='lib-fcount';fcount.textContent=groups[k].length;
+    head.append(caret,fname,fcount);
+    head.addEventListener('click',function(){const c=fold.classList.toggle('collapsed');libSetFold(k,c);});
+    const body=document.createElement('div');body.className='lib-fbody';
+    groups[k].forEach(function(it){body.appendChild(libRow(it));});
+    fold.append(head,body);
+    list.appendChild(fold);
   });
 }
 function saveCurrent(){
@@ -2835,6 +2879,7 @@ function deleteEntry(it){
 document.getElementById('btn-library').addEventListener('click',openLibrary);
 document.getElementById('lib-close').addEventListener('click',closeLibrary);
 document.getElementById('lib-save-btn').addEventListener('click',saveCurrent);
+document.getElementById('lib-search').addEventListener('input',libRender);
 document.getElementById('lib-signin').addEventListener('click',function(){TimelineStore.signIn().then(function(){refreshLibStatus();loadLibList();}).catch(function(e){alert('Sign-in failed: '+(e.message||e));});});
 document.getElementById('lib-overlay').addEventListener('click',function(e){if(e.target===document.getElementById('lib-overlay'))closeLibrary();});
 

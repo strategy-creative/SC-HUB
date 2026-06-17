@@ -1183,7 +1183,8 @@ document.addEventListener('keydown', function(e){
 .plib-controls{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
 .plib-search{width:100%;font-family:'SuisseIntl',sans-serif;font-size:13px;padding:11px 14px;border:1px solid rgba(0,0,0,.12);border-radius:10px;background:#fff;outline:none;box-sizing:border-box;transition:border-color .18s;}
 .plib-search:focus{border-color:#9500FF;}
-.plib-filters{display:flex;flex-wrap:wrap;gap:6px;}
+.plib-filterrow{display:flex;align-items:center;gap:10px;}
+.plib-filters{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0;}
 .plib-chip{font-family:'BoldNeue-Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.5);background:rgba(0,0,0,.05);border:1px solid transparent;border-radius:20px;padding:6px 11px;cursor:pointer;transition:all .15s;}
 .plib-chip:hover{background:rgba(0,0,0,.09);}
 .plib-chip.on{background:#000;color:#fff;}
@@ -1219,7 +1220,7 @@ document.addEventListener('keydown', function(e){
 .plib-close-link:hover{color:#000;}
 .plib-toolbar{display:flex;gap:6px;align-items:center;}
 .plib-sort{font-family:'BoldNeue-Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:rgba(0,0,0,.55);background:rgba(0,0,0,.05);border:1px solid transparent;border-radius:20px;padding:6px 10px;cursor:pointer;outline:none;}
-.plib-newfolder{font-family:'BoldNeue-Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#9500FF;background:rgba(149,0,255,0.08);border:1px solid rgba(149,0,255,0.3);border-radius:20px;padding:6px 11px;cursor:pointer;white-space:nowrap;}
+.plib-newfolder{font-family:'BoldNeue-Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#9500FF;background:rgba(149,0,255,0.08);border:1px solid rgba(149,0,255,0.3);border-radius:20px;padding:6px 11px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 .plib-newfolder:hover{background:rgba(149,0,255,0.14);}
 .plib-folder{display:flex;flex-direction:column;}
 .plib-fhead{display:flex;align-items:center;gap:9px;padding:9px 6px 9px 4px;cursor:pointer;user-select:none;border-bottom:1px solid rgba(0,0,0,0.06);margin-bottom:2px;}
@@ -1243,9 +1244,11 @@ document.addEventListener('keydown', function(e){
     <div class="plib-controls">
       <div class="plib-searchrow">
         <input id="plibSearch" class="plib-search" type="text" placeholder="Search by name or client&hellip;" oninput="renderProps()">
+      </div>
+      <div class="plib-filterrow">
+        <div class="plib-filters" id="plibFilters"></div>
         <button class="plib-newfolder" onclick="plibNewFolder()">+ New client folder</button>
       </div>
-      <div class="plib-filters" id="plibFilters"></div>
     </div>
     <div class="plib-list" id="plibList"></div>
     <div class="plib-foot"><button class="plib-close-link" onclick="closeProposalsView()">Close &times;</button></div>

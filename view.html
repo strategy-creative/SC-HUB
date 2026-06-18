@@ -742,9 +742,11 @@ body.readonly #btn-guide{display:none!important;}
 <select class="field-input" id="lib-folder" style="flex:1;min-width:120px;"></select>
 <button class="btn-primary" id="lib-save-btn">Save current</button>
 </div>
-<div class="plib-controls" style="flex-direction:row;align-items:center;gap:8px;">
-<input class="plib-search" id="lib-search" type="text" placeholder="Search by name or client…" style="flex:1;">
+<div class="plib-controls" style="flex-direction:column;align-items:stretch;gap:8px;">
+<input class="plib-search" id="lib-search" type="text" placeholder="Search by name or client…" style="width:100%;">
+<div style="display:flex;justify-content:flex-end;">
 <button class="plib-newfolder" id="lib-newfolder">+ New client folder</button>
+</div>
 </div>
 <div id="lib-list" class="plib-list"></div>
 <div class="popup-actions" style="margin-top:18px;"><button class="btn-cancel" id="lib-close">Close</button></div>

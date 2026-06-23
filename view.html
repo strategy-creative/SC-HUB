@@ -2699,19 +2699,12 @@ document.getElementById('ai-overlay').addEventListener('click',function(e){if(e.
 })();
 
 // ═══════════════════════════════════════════════════════════════════
-// LIBRARY  (UI lives in the hub; data lives in Firebase once configured)
+// LIBRARY  (UI lives in the hub; data lives in Supabase — same project as the hub)
 // ═══════════════════════════════════════════════════════════════════
-// ▼▼▼ PASTE YOUR FIREBASE WEB CONFIG HERE to switch from this-browser to the
-//     shared team library. Leave projectId empty to keep saving locally. ▼▼▼
-const SC_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyBBx2xU_3tvcw0A2aIs0iNEnJrilvlHN2w",
-  authDomain: "sc-timelines.firebaseapp.com",
-  projectId: "sc-timelines",
-  storageBucket: "sc-timelines.firebasestorage.app",
-  messagingSenderId: "653446187626",
-  appId: "1:653446187626:web:8b0c84fd5808b112941813"
-};
-// ▲▲▲ ────────────────────────────────────────────────────────────────── ▲▲▲
+// Supabase config for the standalone (non-hub) path. Inside the hub the tool
+// brokers to the hub's Supabase client via postMessage instead (see BrokerStore).
+const SC_SUPABASE_URL = "https://fdfrziuuqagvmbjhvjde.supabase.co";
+const SC_SUPABASE_KEY = "sb_publishable_bVhMFzlTqo2IHwmsc9IA8g_sdt7I_Ch";
 
 function _libId(){return 'tl_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 
@@ -2740,32 +2733,45 @@ function _loadScripts(urls){
     const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=function(){rej(new Error('Failed to load '+u));};document.head.appendChild(s);
   });});},Promise.resolve());
 }
-function makeCloudStore(cfg){
-  let currentUser=null, readyP=null, auth=null, db=null;
+function makeSupabaseStore(){
+  let currentUser=null, readyP=null, sb=null;
   function ensure(){
     if(readyP)return readyP;
-    readyP=_loadScripts([
-      'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
-      'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js',
-      'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js'
-    ]).then(function(){
-      firebase.initializeApp(cfg); auth=firebase.auth(); db=firebase.firestore();
-      auth.onAuthStateChanged(function(u){currentUser=u;});
+    var loadP = (typeof window.supabase!=='undefined' && window.supabase.createClient)
+      ? Promise.resolve()
+      : _loadScripts(['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js']);
+    readyP=loadP.then(function(){
+      sb=window.supabase.createClient(SC_SUPABASE_URL, SC_SUPABASE_KEY);
+      sb.auth.onAuthStateChange(function(_e,session){currentUser=session?session.user:null;if(typeof refreshLibStatus==='function')refreshLibStatus();});
+      return sb.auth.getSession().then(function(r){currentUser=(r&&r.data&&r.data.session)?r.data.session.user:null;});
     });
     return readyP;
   }
+  function uinfo(){return currentUser?{email:currentUser.email,uid:currentUser.id,displayName:(currentUser.user_metadata&&(currentUser.user_metadata.full_name||currentUser.user_metadata.name))||currentUser.email}:null;}
+  function _chk(r){if(r&&r.error)throw new Error(r.error.message);return r;}
   return {
     mode:'cloud',
     ready(){return ensure();},
-    user(){return currentUser;},
-    signIn(){return ensure().then(function(){return auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());}).then(function(r){currentUser=r.user;return r.user;});},
-    list(){return ensure().then(function(){return db.collection('timelines').orderBy('updated','desc').get();}).then(function(s){return s.docs.map(function(d){return Object.assign({id:d.id},d.data());});});},
-    save(entry){return ensure().then(function(){return db.collection('timelines').doc(entry.id).set(entry);}).then(function(){return entry;});},
-    remove(id){return ensure().then(function(){return db.collection('timelines').doc(id).delete();});}
+    user(){return uinfo();},
+    signIn(){return ensure().then(function(){return sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.href.split('#')[0]}});}).then(function(r){_chk(r);return uinfo();});},
+    list(){return ensure().then(function(){return sb.from('timelines').select('id,entry').order('updated',{ascending:false});}).then(function(r){_chk(r);return (r.data||[]).map(function(x){return Object.assign({id:x.id},x.entry||{});});});},
+    save(entry){return ensure().then(function(){if(!currentUser)throw new Error('Please sign in first.');return sb.from('timelines').upsert({id:entry.id,entry:entry,client:entry.client||null,by:currentUser.email,updated:new Date().toISOString()});}).then(function(r){_chk(r);return entry;});},
+    remove(id){return ensure().then(function(){return sb.from('timelines').delete().eq('id',id);}).then(function(r){_chk(r);});},
+    folders(){return ensure().then(function(){return sb.from('folders').select('name').eq('tool','timeline');}).then(function(r){_chk(r);return (r.data||[]).map(function(x){return x.name;});});},
+    addFolder(name){return ensure().then(function(){if(!currentUser)throw new Error('Please sign in first.');var fn=(name||'').trim();if(!fn)throw new Error('Folder needs a name.');return sb.from('folders').insert({tool:'timeline',name:fn,by:currentUser.email});}).then(function(r){if(r&&r.error&&!/duplicate|unique/i.test(r.error.message||''))throw new Error(r.error.message);return true;});},
+    renameFolder(o,n){return ensure().then(function(){if(!currentUser)throw new Error('Please sign in first.');var newN=(n||'').trim();if(!newN)throw new Error('New name required.');
+      return sb.from('folders').update({name:newN}).eq('tool','timeline').eq('name',o).then(function(){
+        return sb.from('timelines').select('id,entry').then(function(r){_chk(r);
+          var rows=(r.data||[]).filter(function(x){return ((x.entry&&x.entry.client)||'')===o;});
+          return Promise.all(rows.map(function(x){var e=Object.assign({},x.entry,{client:newN});return sb.from('timelines').update({entry:e,client:newN,updated:new Date().toISOString()}).eq('id',x.id);}));
+        });
+      });
+    }).then(function(){return true;});},
+    removeFolder(name){return ensure().then(function(){if(!currentUser)throw new Error('Please sign in first.');return sb.from('folders').delete().eq('tool','timeline').eq('name',name);}).then(function(r){_chk(r);return true;});}
   };
 }
-// ── In the hub, the tool is a blob page where Firebase sign-in can't run, so we
-//    talk to the hub's main window (which holds Firebase) via postMessage. ──
+// ── In the hub, the tool is a blob page where popup sign-in can't run, so we
+//    talk to the hub's main window (which holds the Supabase client) via postMessage. ──
 const IN_HUB = (function(){try{return window.self!==window.top;}catch(e){return true;}})();
 const _bk={pending:{},seq:0,user:null};
 function brokerCall(type,payload){
@@ -2793,7 +2799,7 @@ const BrokerStore={
   renameFolder(o,n){return brokerCall('sc-folder-rename',{tool:'timeline',old:o,'new':n});},
   removeFolder(name){return brokerCall('sc-folder-remove',{tool:'timeline',name:name});}
 };
-const TimelineStore = IN_HUB ? BrokerStore : ((SC_FIREBASE_CONFIG && SC_FIREBASE_CONFIG.projectId) ? makeCloudStore(SC_FIREBASE_CONFIG) : LocalStore);
+const TimelineStore = IN_HUB ? BrokerStore : makeSupabaseStore();
 
 // ── Library UI ──
 function openLibrary(){
@@ -2806,7 +2812,7 @@ function closeLibrary(){document.getElementById('lib-overlay').classList.add('hi
 function refreshLibStatus(){
   const s=document.getElementById('lib-status'), signin=document.getElementById('lib-signin');
   if(TimelineStore.mode==='local'){
-    s.textContent='Saving to this browser only — add your Firebase config to share with the team.';
+    s.textContent='Saving to this browser only — sign in to share with the team.';
     signin.style.display='none';
   }else{
     const u=TimelineStore.user&&TimelineStore.user();

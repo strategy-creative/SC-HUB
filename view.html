@@ -2388,10 +2388,9 @@ function getIdToken(){
   if(IN_HUB) return brokerCall('sc-auth-token').then(function(t){if(!t)throw new Error('Please open the Library and sign in with Google to use AI.');return t;});
   if(typeof TimelineStore==='undefined'||TimelineStore.mode!=='cloud')
     return Promise.reject(new Error('Sign-in required for AI.'));
-  return Promise.resolve(TimelineStore.ready()).then(function(){
-    var u=TimelineStore.user&&TimelineStore.user();
-    if(!u)throw new Error('Please open the Library and sign in with Google to use AI.');
-    return u.getIdToken();
+  return Promise.resolve(TimelineStore.token&&TimelineStore.token()).then(function(t){
+    if(!t)throw new Error('Please open the Library and sign in with Google to use AI.');
+    return t;
   });
 }
 function callClaudeTL(system,userMsg,maxTokens,onSuccess,onError){
@@ -2753,6 +2752,7 @@ function makeSupabaseStore(){
     mode:'cloud',
     ready(){return ensure();},
     user(){return uinfo();},
+    token(){return ensure().then(function(){return sb.auth.getSession();}).then(function(r){return (r&&r.data&&r.data.session)?r.data.session.access_token:null;});},
     signIn(){return ensure().then(function(){return sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.href.split('#')[0]}});}).then(function(r){_chk(r);return uinfo();});},
     list(){return ensure().then(function(){return sb.from('timelines').select('id,entry').order('updated',{ascending:false});}).then(function(r){_chk(r);return (r.data||[]).map(function(x){return Object.assign({id:x.id},x.entry||{});});});},
     save(entry){return ensure().then(function(){if(!currentUser)throw new Error('Please sign in first.');return sb.from('timelines').upsert({id:entry.id,entry:entry,client:entry.client||null,by:currentUser.email,updated:new Date().toISOString()});}).then(function(r){_chk(r);return entry;});},

@@ -199,6 +199,8 @@ body.readonly .sidebar-resizer{display:none;}
   user-select:none;
 }
 .col-header.today-col{background:rgba(149,0,255,0.04);}
+.col-header{cursor:pointer;}
+.col-header.hl-col{background:rgba(255,193,7,0.28);}
 .col-main{font-family:var(--body);font-size:12px;color:var(--t-primary);letter-spacing:0;}
 .col-sub{font-family:var(--mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--t-tertiary);margin-top:2px;}
 
@@ -652,7 +654,7 @@ body.readonly #btn-guide{display:none!important;}
     </svg>
   </div>
   <div class="hub-header-right">
-    <span class="hub-client-input" id="client-name" contenteditable="true" spellcheck="false">Project Name</span>
+    <span class="hub-client-input" id="client-name" contenteditable="true" spellcheck="true">Project Name</span>
     <span class="hub-date" id="nav-date"></span>
   </div>
 </header>
@@ -769,7 +771,7 @@ body.readonly #btn-guide{display:none!important;}
 </div>
 <div class="field">
 <label class="field-label">Notes (optional)</label>
-<textarea class="field-input" id="ai-notes" rows="4" placeholder="Paste rough notes, a brief, or anything relevant..." style="resize:vertical;width:100%;"></textarea>
+<textarea class="field-input" id="ai-notes" rows="4" placeholder="Paste rough notes, a brief, or anything relevant..." style="resize:vertical;width:100%;" spellcheck="true"></textarea>
 </div>
 <div class="popup-actions">
 <button class="btn-cancel" id="ai-cancel">Cancel</button>
@@ -793,7 +795,7 @@ body.readonly #btn-guide{display:none!important;}
 <div id="aie-stage-input">
 <div class="popup-title">✦ Ask AI to edit the timeline</div>
 <p class="range-note">Describe a change and it&#39;s applied to the current board &mdash; e.g. &ldquo;compress the whole timeline by a month&rdquo;, &ldquo;push Production back two weeks&rdquo;, &ldquo;add a QA task to Delivery&rdquo;. Every change is one ⌘Z away from undone.</p>
-<div class="field"><textarea class="field-input" id="aie-input" rows="3" placeholder="What should change?" style="resize:vertical;width:100%;"></textarea></div>
+<div class="field"><textarea class="field-input" id="aie-input" rows="3" placeholder="What should change?" style="resize:vertical;width:100%;" spellcheck="true"></textarea></div>
 <div class="popup-actions">
 <button class="btn-cancel" id="aie-cancel">Cancel</button>
 <button class="btn-primary" id="aie-go">Apply change</button>
@@ -842,7 +844,7 @@ body.readonly #btn-guide{display:none!important;}
     <div class="popup-title">Edit bar</div>
     <div class="field">
       <label class="field-label">Label</label>
-      <input class="field-input" id="bar-label" type="text" placeholder="e.g. Brand Strategy">
+      <input class="field-input" id="bar-label" type="text" placeholder="e.g. Brand Strategy" spellcheck="true">
     </div>
     <div class="field-row">
       <div class="field">
@@ -906,6 +908,7 @@ let rangeEnd=(function(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getD
 let numCols=65, columnDates=[], colWidth=46;
 let groups=[], nextId=1;
 let selectedBarId=null, editingBarId=null, selectedMilestoneId=null;
+let highlightDates=new Set();  // date-column highlights (by column start timestamp), toggled from the header
 let _newBarId=null; // a just-drawn bar awaiting Save; removed if the popup is cancelled
 let dragState=null, groupDragId=null, rowDragId=null;
 const READONLY=(function(){try{if(window.__SC_READONLY__)return true;const p=new URLSearchParams(location.search);return p.get('view')==='1'||p.get('readonly')==='1';}catch(e){return false;}})();
@@ -1087,6 +1090,13 @@ function renderHeader(){
     else if(viewMode==='day') iT=d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate();
     else iT=today>=d&&today<colEnd(i);
     if(iT)div.classList.add('today-col');
+    const cts=d.getTime();
+    if(highlightDates.has(cts))div.classList.add('hl-col');
+    div.title='Click to highlight this date · click again to clear';
+    div.addEventListener('click',()=>{
+      if(highlightDates.has(cts))highlightDates.delete(cts); else highlightDates.add(cts);
+      renderHeader(); renderGrid();
+    });
     let main='',sub='',mainSz='12px';
     if(viewMode==='month'){main=MONTHS_S[d.getMonth()];sub=d.getFullYear();}
     else if(viewMode==='week'){main=d.getDate();sub=MONTHS_S[d.getMonth()];mainSz='16px';}
@@ -1121,7 +1131,7 @@ function renderSidebar(){
     dh.innerHTML='<div class="dh-col"><div class="dh-dot"></div><div class="dh-dot"></div><div class="dh-dot"></div></div><div class="dh-col"><div class="dh-dot"></div><div class="dh-dot"></div><div class="dh-dot"></div></div>';
 
     const nm=document.createElement('span');
-    nm.className='grp-name';nm.setAttribute('contenteditable','false');nm.spellcheck=false;nm.textContent=g.name;nm.dataset.ph='Phase name';
+    nm.className='grp-name';nm.setAttribute('contenteditable','false');nm.spellcheck=true;nm.textContent=g.name;nm.dataset.ph='Phase name';
     nm.draggable=false;
     // Click-to-edit: the name is inert until clicked, so dragging works from
     // anywhere on the phase row (not just the dot handle).
@@ -1210,7 +1220,7 @@ function renderSidebar(){
         const dh2=document.createElement('div');dh2.className='row-drag-handle';
         dh2.innerHTML='<div class="dh-col"><div class="dh-dot"></div><div class="dh-dot"></div><div class="dh-dot"></div></div><div class="dh-col"><div class="dh-dot"></div><div class="dh-dot"></div><div class="dh-dot"></div></div>';
         const nm2=document.createElement('span');
-        nm2.className='row-name';nm2.setAttribute('contenteditable','false');nm2.spellcheck=false;nm2.textContent=r.name;nm2.dataset.ph='Task name';
+        nm2.className='row-name';nm2.setAttribute('contenteditable','false');nm2.spellcheck=true;nm2.textContent=r.name;nm2.dataset.ph='Task name';
         nm2.draggable=false;
         nm2.addEventListener('blur',()=>{commitChange();nm2.setAttribute('contenteditable','false');rEl.draggable=!READONLY;});
         nm2.addEventListener('input',e=>{r.name=e.target.textContent;});
@@ -1314,6 +1324,17 @@ function renderGrid(){
       const rs=document.createElement('div');
       rs.style.cssText='position:absolute;left:0;right:0;top:'+y+'px;height:'+RH+'px;background:#fff;border-bottom:1px solid rgba(0,0,0,0.06);';
       content.appendChild(rs);y+=RH;
+    }
+  }
+
+  // ── Highlighted date columns (readability bands, toggled from the header) ──
+  if(highlightDates.size){
+    for(let i=0;i<numCols;i++){
+      if(highlightDates.has(columnDates[i].getTime())){
+        const hb=document.createElement('div');
+        hb.style.cssText='position:absolute;top:0;bottom:0;left:'+(i*colWidth)+'px;width:'+colWidth+'px;background:rgba(255,193,7,0.16);pointer-events:none;z-index:1;';
+        content.appendChild(hb);
+      }
     }
   }
 

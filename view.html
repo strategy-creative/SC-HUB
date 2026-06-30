@@ -1553,6 +1553,10 @@ function renderBarEl(container,bar,rowId,bs,be,rowTop){
   // Right-click → add a milestone emoji in this task row, just after the bar
   el.addEventListener('contextmenu',e=>{
     if(READONLY)return;
+    // If right-clicking inside editable text (e.g. while renaming the bar), let the
+    // browser's native spell-check / correction menu show instead of the emoji picker.
+    const t=e.target;
+    if(t&&(t.isContentEditable||t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;
     e.preventDefault();e.stopPropagation();selectBar(bar.id);
     openMsEmojiPicker({left:e.clientX,right:e.clientX,top:e.clientY,bottom:e.clientY},function(em){
       commitNow();

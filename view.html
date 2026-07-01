@@ -908,6 +908,7 @@ let rangeEnd=(function(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getD
 let numCols=65, columnDates=[], colWidth=46;
 let groups=[], nextId=1;
 let selectedBarId=null, editingBarId=null, selectedMilestoneId=null;
+let selectedBarIds=new Set();  // multi-selection of bars (selectedBarId is the primary/last one)
 let highlightDates=new Set();  // date-column highlights (by column start timestamp), toggled from the header
 let clipboard=null;            // copied/cut time blocks (array of bar data, no ids)
 let lastClickTime=null;        // date under the last grid click — paste target
@@ -1520,7 +1521,7 @@ function renderBarEl(container,bar,rowId,bs,be,rowTop){
   const left=t2pxSmart(bs),width=Math.max(4,t2pxSmart(be)-left),top=rowTop+(RH-BH)/2;
   const light=isLight(bar.color||'#9500FF');
   const el=document.createElement('div');
-  el.className='bar'+(bar.id===selectedBarId?' selected':'');
+  el.className='bar'+(selectedBarIds.has(bar.id)?' selected':'');
   el.dataset.bid=bar.id;el.dataset.rid=rowId;
   el.style.cssText='left:'+left+'px;top:'+top+'px;width:'+width+'px;height:'+BH+'px;background:'+(bar.color||'#9500FF')+';';
   const inner=document.createElement('div');inner.className='bar-inner';
@@ -1537,7 +1538,10 @@ function renderBarEl(container,bar,rowId,bs,be,rowTop){
   el.addEventListener('mousedown',e=>{
     if(READONLY)return;
     if(lbl.getAttribute('contenteditable')==='true')return; // editing — let caret work
-    e.stopPropagation();selectBar(bar.id);
+    e.stopPropagation();
+    if(e.shiftKey){ toggleBarSelect(bar.id); e.preventDefault(); return; } // shift-click = add/remove from multi-selection, no drag
+    if(!selectedBarIds.has(bar.id)) selectBar(bar.id);   // plain click on an unselected bar → single select
+    else selectedBarId=bar.id;                           // clicking a bar already in the group → keep the group, make it primary
     const rx=e.clientX-el.getBoundingClientRect().left;
     if(rx<12)startResize(e,bar,'left');
     else if(rx>el.offsetWidth-12)startResize(e,bar,'right');
@@ -1636,7 +1640,11 @@ function startMove(e,bar,origLeft){
   chip.textContent=(bar.emoji?bar.emoji+' ':'')+((bar.label||'').trim()||'Untitled');
   chip.style.display='none';
   document.body.appendChild(chip);
-  dragState={type:'move',barId:bar.id,dur:bar.end-bar.start,anchorX:e.clientX-rect.left,origLeft,chip,sx:e.clientX,sy:e.clientY,moved:false};
+  dragState={type:'move',barId:bar.id,dur:bar.end-bar.start,anchorX:e.clientX-rect.left,origLeft,chip,sx:e.clientX,sy:e.clientY,moved:false,
+    origStart:bar.start,
+    group:(selectedBarIds.size>1&&selectedBarIds.has(bar.id))
+      ? [...selectedBarIds].filter(x=>x!==bar.id).map(id=>{const gf=findBar(id);return gf?{id:id,os:gf.bar.start,oe:gf.bar.end}:null;}).filter(Boolean)
+      : []};
 }
 function startResize(e,bar,side){beginChange();dragState={type:'resize',barId:bar.id,side};}
 
@@ -1764,7 +1772,9 @@ document.addEventListener('mouseup',e=>{
     hideDropGhost();
     if(!dragState.moved){var _cbid=dragState.barId;_pending=null;dragState=null;clearTimeout(_barEditTimer);_barEditTimer=setTimeout(function(){enterBarEdit(_cbid);},230);return;}
     if(overBin){
-      deleteBar(dragState.barId);selectedBarId=null;renderGrid();commitChange();
+      deleteBar(dragState.barId);
+      (dragState.group||[]).forEach(g=>deleteBar(g.id));
+      selectBar(null);renderGrid();commitChange();
     }else if(inGrid(e.clientX,e.clientY)){
       const d=computeBarDrop(e);
       const f=findBar(dragState.barId);
@@ -1778,6 +1788,9 @@ document.addEventListener('mouseup',e=>{
           else if(i>=0)f.row.bars.splice(i,0,f.bar);
         }
       }
+      // Move the rest of the multi-selection by the same time delta (rows unchanged).
+      const delta=d.start-dragState.origStart;
+      (dragState.group||[]).forEach(g=>{const gf=findBar(g.id);if(gf){gf.bar.start=g.os+delta;gf.bar.end=g.oe+delta;}});
       renderGrid();commitChange();
     }else{
       // Off-grid and not the bin → snap back (data untouched during the drag)
@@ -1805,8 +1818,22 @@ function removeGhost(){const g=document.getElementById('draw-ghost');if(g)g.remo
 // ═══════════════════════════════════════════════════════════════════
 function selectBar(id){
   selectedBarId=id;
+  selectedBarIds = id ? new Set([id]) : new Set();
   if(id)selectedMilestoneId=null;
-  document.querySelectorAll('.bar').forEach(el=>el.classList.toggle('selected',el.dataset.bid===id));
+  refreshBarSelClasses();
+}
+function toggleBarSelect(id){  // shift-click: add/remove a bar from the multi-selection
+  if(selectedBarIds.has(id)){
+    selectedBarIds.delete(id);
+    if(selectedBarId===id) selectedBarId = selectedBarIds.size ? [...selectedBarIds][selectedBarIds.size-1] : null;
+  }else{
+    selectedBarIds.add(id); selectedBarId=id;
+  }
+  if(selectedBarIds.size)selectedMilestoneId=null;
+  refreshBarSelClasses();
+}
+function refreshBarSelClasses(){
+  document.querySelectorAll('.bar').forEach(el=>el.classList.toggle('selected',selectedBarIds.has(el.dataset.bid)));
 }
 document.getElementById('grid-scroll').addEventListener('click',e=>{if(!e.target.closest('.bar'))selectBar(null);if(!e.target.closest('.milestone-marker')&&selectedMilestoneId){selectedMilestoneId=null;renderGrid();}});
 document.addEventListener('keydown',e=>{
@@ -1817,7 +1844,7 @@ document.addEventListener('keydown',e=>{
   }
   if(e.key==='Escape'){var _ob=document.getElementById('onboard-overlay');if(_ob&&!_ob.classList.contains('hidden')){closeOnboardToHub();return;}selectBar(null);selectedMilestoneId=null;closeBarPopup();closeColorPop();closeRangePopup();closeAIPopup();closeLibrary();document.getElementById('sharelink-overlay').classList.add('hidden');}
   if((e.key==='Delete'||e.key==='Backspace')&&!READONLY&&!e.target.isContentEditable&&e.target.tagName!=='INPUT'){
-    if(selectedBarId){commitNow();deleteBar(selectedBarId);selectedBarId=null;renderGrid();}
+    if(selectedBarIds.size){commitNow();[...selectedBarIds].forEach(id=>deleteBar(id));selectBar(null);renderGrid();}
     else if(selectedMilestoneId){commitNow();milestones=milestones.filter(x=>x.id!==selectedMilestoneId);selectedMilestoneId=null;renderGrid();autoSave();}
   }
 });
@@ -1962,7 +1989,7 @@ function applyState(str){
     startYear=s.startYear; startMonth=s.startMonth; milestones=s.milestones||[]; emojiLegend=s.emojiLegend||{};
     rangeStart=s.rangeStart||rangeStart; rangeEnd=s.rangeEnd||rangeEnd;
   }catch(err){return;}
-  selectedBarId=null; editingBarId=null; dragState=null; milestoneDragId=null; _pending=null;
+  selectedBarId=null; selectedBarIds=new Set(); editingBarId=null; dragState=null; milestoneDragId=null; _pending=null;
   closeBarPopup(); closeColorPop();
   ['day','week','month','quarter'].forEach(v=>document.getElementById('btn-'+v).classList.toggle('active',v===viewMode));
   render();
@@ -1975,17 +2002,18 @@ function redo(){if(!redoStack.length)return;undoStack.push(snapState());applySta
 
 // ── COPY / CUT / PASTE time blocks ──
 function copySelectedBars(){
-  if(!selectedBarId)return false;
-  const f=findBar(selectedBarId);if(!f)return false;
-  clipboard=[{start:f.bar.start,end:f.bar.end,color:f.bar.color,label:f.bar.label||'',progress:f.bar.progress||0,emoji:f.bar.emoji||null,_rowId:f.row.id}];
-  return true;
+  if(!selectedBarIds.size)return false;
+  clipboard=[];
+  selectedBarIds.forEach(id=>{const f=findBar(id);if(f)clipboard.push({start:f.bar.start,end:f.bar.end,color:f.bar.color,label:f.bar.label||'',progress:f.bar.progress||0,emoji:f.bar.emoji||null,_rowId:f.row.id});});
+  clipboard.sort((a,b)=>a.start-b.start); // earliest first, so paste references the earliest block's end
+  return clipboard.length>0;
 }
 function pasteBars(){
   if(!clipboard||!clipboard.length)return;
   commitNow();
   const ref=clipboard[0].start;
   const base=clipboard[0].end; // paste to the right — start where the copied block ends
-  let lastId=null;
+  const pastedIds=[];
   clipboard.forEach(cb=>{
     const fr=findRow(cb._rowId);
     const row=fr?fr.row:(groups[0]&&groups[0].rows[0]);
@@ -1993,11 +2021,11 @@ function pasteBars(){
     const ns=base+(cb.start-ref), ne=ns+(cb.end-cb.start);
     const nb={id:uid(),start:ns,end:ne,color:cb.color,label:cb.label,progress:cb.progress||0};
     if(cb.emoji)nb.emoji=cb.emoji;
-    row.bars.push(nb);lastId=nb.id;
+    row.bars.push(nb);pastedIds.push(nb.id);
     cb.start=ns; cb.end=ne; // advance clipboard so repeated pastes cascade rightward
   });
   renderGrid();renderSidebar();commitChange();autoSave();
-  if(lastId)selectBar(lastId);
+  if(pastedIds.length){selectedBarIds=new Set(pastedIds);selectedBarId=pastedIds[pastedIds.length-1];refreshBarSelClasses();}
 }
 document.addEventListener('keydown',e=>{
   if(READONLY)return;
@@ -2015,7 +2043,7 @@ document.addEventListener('keydown',e=>{
     if(copySelectedBars())e.preventDefault();
   }else if((e.metaKey||e.ctrlKey)&&k==='x'){
     if(e.target.isContentEditable||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
-    if(copySelectedBars()){e.preventDefault();commitNow();deleteBar(selectedBarId);selectedBarId=null;renderGrid();autoSave();}
+    if(copySelectedBars()){e.preventDefault();commitNow();[...selectedBarIds].forEach(id=>deleteBar(id));selectBar(null);renderGrid();autoSave();}
   }else if((e.metaKey||e.ctrlKey)&&k==='v'){
     if(e.target.isContentEditable||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return; // native paste in text fields
     e.preventDefault();pasteBars();
@@ -3082,7 +3110,7 @@ function startBlankBoard(){
   seedData();
   startYear=new Date().getFullYear();
   startMonth=new Date().getMonth();
-  selectedBarId=null;selectedMilestoneId=null;editingBarId=null;_newBarId=null;
+  selectedBarId=null;selectedBarIds=new Set();selectedMilestoneId=null;editingBarId=null;_newBarId=null;
   var cn=document.getElementById('client-name');if(cn)cn.textContent='Project Name';
   var fc=document.getElementById('footer-client');if(fc)fc.textContent='';
   render();autoSave();

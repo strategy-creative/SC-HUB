@@ -909,6 +909,8 @@ let numCols=65, columnDates=[], colWidth=46;
 let groups=[], nextId=1;
 let selectedBarId=null, editingBarId=null, selectedMilestoneId=null;
 let highlightDates=new Set();  // date-column highlights (by column start timestamp), toggled from the header
+let clipboard=null;            // copied/cut time blocks (array of bar data, no ids)
+let lastClickTime=null;        // date under the last grid click — paste target
 let _newBarId=null; // a just-drawn bar awaiting Save; removed if the popup is cancelled
 let dragState=null, groupDragId=null, rowDragId=null;
 const READONLY=(function(){try{if(window.__SC_READONLY__)return true;const p=new URLSearchParams(location.search);return p.get('view')==='1'||p.get('readonly')==='1';}catch(e){return false;}})();
@@ -1607,6 +1609,7 @@ function onGridDown(e){
   selectBar(null);selectedMilestoneId=null;
   const rect=document.getElementById('grid-content').getBoundingClientRect();
   const x=e.clientX-rect.left,y=e.clientY-rect.top;
+  {const _c=Math.max(0,Math.min(numCols-1,Math.floor(x/colWidth)));lastClickTime=(viewMode==='day')?pxToHalfDayTime(x,false):snapS(_c);}
   const rowId=rowAtY(y);if(!rowId)return;
   // Pressing within 12px of an existing bar's edge in this row grabs that
   // edge (resize) instead of starting a new bar — kills accidental draws.
@@ -1969,6 +1972,32 @@ function beginChange(){if(_pending===null)_pending=snapState();}
 function commitChange(){if(_pending!==null){if(_pending!==snapState()){undoStack.push(_pending);if(undoStack.length>200)undoStack.shift();redoStack=[];}_pending=null;}}
 function undo(){if(!undoStack.length)return;redoStack.push(snapState());applyState(undoStack.pop());}
 function redo(){if(!redoStack.length)return;undoStack.push(snapState());applyState(redoStack.pop());}
+
+// ── COPY / CUT / PASTE time blocks ──
+function copySelectedBars(){
+  if(!selectedBarId)return false;
+  const f=findBar(selectedBarId);if(!f)return false;
+  clipboard=[{start:f.bar.start,end:f.bar.end,color:f.bar.color,label:f.bar.label||'',progress:f.bar.progress||0,emoji:f.bar.emoji||null,_rowId:f.row.id}];
+  return true;
+}
+function pasteBars(){
+  if(!clipboard||!clipboard.length)return;
+  commitNow();
+  const ref=clipboard[0].start;
+  const base=(lastClickTime!=null)?lastClickTime:clipboard[0].end; // last-clicked date, else just after the original
+  let lastId=null;
+  clipboard.forEach(cb=>{
+    const fr=findRow(cb._rowId);
+    const row=fr?fr.row:(groups[0]&&groups[0].rows[0]);
+    if(!row)return;
+    const ns=base+(cb.start-ref), ne=ns+(cb.end-cb.start);
+    const nb={id:uid(),start:ns,end:ne,color:cb.color,label:cb.label,progress:cb.progress||0};
+    if(cb.emoji)nb.emoji=cb.emoji;
+    row.bars.push(nb);lastId=nb.id;
+  });
+  renderGrid();renderSidebar();commitChange();autoSave();
+  if(lastId)selectBar(lastId);
+}
 document.addEventListener('keydown',e=>{
   if(READONLY)return;
   const k=(e.key||'').toLowerCase();
@@ -1980,6 +2009,15 @@ document.addEventListener('keydown',e=>{
   }else if((e.metaKey||e.ctrlKey)&&((k==='z'&&e.shiftKey)||k==='y')){
     if(e.target.isContentEditable||e.target.tagName==='INPUT')return;
     e.preventDefault();redo();
+  }else if((e.metaKey||e.ctrlKey)&&k==='c'){
+    if(e.target.isContentEditable||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return; // native copy in text fields
+    if(copySelectedBars())e.preventDefault();
+  }else if((e.metaKey||e.ctrlKey)&&k==='x'){
+    if(e.target.isContentEditable||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+    if(copySelectedBars()){e.preventDefault();commitNow();deleteBar(selectedBarId);selectedBarId=null;renderGrid();autoSave();}
+  }else if((e.metaKey||e.ctrlKey)&&k==='v'){
+    if(e.target.isContentEditable||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return; // native paste in text fields
+    e.preventDefault();pasteBars();
   }
 });
 

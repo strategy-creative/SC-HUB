@@ -201,6 +201,8 @@ body.readonly .sidebar-resizer{display:none;}
 .col-header.today-col{background:rgba(149,0,255,0.04);}
 .col-header{cursor:pointer;}
 .col-header.hl-col{background:rgba(255,193,7,0.28);}
+.col-header.bo-col{background:rgba(0,0,0,0.5);}
+.col-header.bo-col .col-main,.col-header.bo-col .col-sub{color:#fff;}
 .col-main{font-family:var(--body);font-size:12px;color:var(--t-primary);letter-spacing:0;}
 .col-sub{font-family:var(--mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--t-tertiary);margin-top:2px;}
 
@@ -909,7 +911,8 @@ let numCols=65, columnDates=[], colWidth=46;
 let groups=[], nextId=1;
 let selectedBarId=null, editingBarId=null, selectedMilestoneId=null;
 let selectedBarIds=new Set();  // multi-selection of bars (selectedBarId is the primary/last one)
-let highlightDates=new Set();  // date-column highlights (by column start timestamp), toggled from the header
+let highlightDates=new Set();  // date-column highlights (by column start timestamp), toggled from the header — transient
+let blackoutDates=new Set();   // holiday / non-working date columns (shift-click header) — saved in state
 let clipboard=null;            // copied/cut time blocks (array of bar data, no ids)
 let lastClickTime=null;        // date under the last grid click — paste target
 let _newBarId=null; // a just-drawn bar awaiting Save; removed if the popup is cancelled
@@ -1095,9 +1098,12 @@ function renderHeader(){
     if(iT)div.classList.add('today-col');
     const cts=d.getTime();
     if(highlightDates.has(cts))div.classList.add('hl-col');
-    div.title='Click to highlight this date · click again to clear';
-    div.addEventListener('click',()=>{
-      if(highlightDates.has(cts))highlightDates.delete(cts); else highlightDates.add(cts);
+    if(blackoutDates.has(cts))div.classList.add('bo-col');
+    div.title='Click to highlight · Shift-click to black out (holiday) · click again to clear';
+    div.addEventListener('click',(ev)=>{
+      const set=ev.shiftKey?blackoutDates:highlightDates;
+      if(set.has(cts))set.delete(cts); else set.add(cts);
+      if(ev.shiftKey)autoSave();   // blackout is saved; highlight is a transient reading aid
       renderHeader(); renderGrid();
     });
     let main='',sub='',mainSz='12px';
@@ -1241,9 +1247,11 @@ function renderSidebar(){
         const acts2=document.createElement('div');acts2.className='row-actions';
         const a1=document.createElement('button');a1.className='ra-btn';a1.textContent='+';a1.title='Add task below';
         a1.addEventListener('click',()=>addRowBelow(r.id));
+        const ac=document.createElement('button');ac.className='ra-btn ra-color';ac.title='Row colour';ac.textContent='●';ac.style.color=r.color||'rgba(0,0,0,0.3)';
+        ac.addEventListener('click',(ev)=>{ev.stopPropagation();openRowColorPop(r.id,ac);});
         const a2=document.createElement('button');a2.className='ra-btn del';a2.innerHTML='&#10005;';a2.title='Delete task';
         a2.addEventListener('click',()=>deleteRow(r.id));
-        acts2.append(a1,a2);
+        acts2.append(a1,ac,a2);
         rEl.append(dh2,nm2,acts2);
         rEl.addEventListener('dragstart',e=>{
           rowDragId=r.id;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',r.id);
@@ -1325,7 +1333,7 @@ function renderGrid(){
     content.appendChild(gs);y+=GH;
     if(!g.collapsed)for(const r of g.rows){
       const rs=document.createElement('div');
-      rs.style.cssText='position:absolute;left:0;right:0;top:'+y+'px;height:'+RH+'px;background:#fff;border-bottom:1px solid rgba(0,0,0,0.06);';
+      rs.style.cssText='position:absolute;left:0;right:0;top:'+y+'px;height:'+RH+'px;background:'+(r.color||'#fff')+';border-bottom:1px solid rgba(0,0,0,0.06);';
       content.appendChild(rs);y+=RH;
     }
   }
@@ -1337,6 +1345,17 @@ function renderGrid(){
         const hb=document.createElement('div');
         hb.style.cssText='position:absolute;top:0;bottom:0;left:'+(i*colWidth)+'px;width:'+colWidth+'px;background:rgba(255,193,7,0.16);pointer-events:none;z-index:1;';
         content.appendChild(hb);
+      }
+    }
+  }
+
+  // ── Blacked-out date columns (holidays / non-working days) ──
+  if(blackoutDates.size){
+    for(let i=0;i<numCols;i++){
+      if(blackoutDates.has(columnDates[i].getTime())){
+        const bo=document.createElement('div');
+        bo.style.cssText='position:absolute;top:0;bottom:0;left:'+(i*colWidth)+'px;width:'+colWidth+'px;pointer-events:none;z-index:1;background:repeating-linear-gradient(45deg,rgba(0,0,0,0.16),rgba(0,0,0,0.16) 5px,rgba(0,0,0,0.06) 5px,rgba(0,0,0,0.06) 10px);';
+        content.appendChild(bo);
       }
     }
   }
@@ -1920,8 +1939,31 @@ function openColorPop(gid,anchor){
   pop.style.left=(rect.left-6)+'px';pop.style.top=(rect.bottom+8)+'px';
   pop.classList.add('open');
 }
+function openRowColorPop(rowId,anchor){
+  const fr=findRow(rowId);if(!fr)return;const r=fr.row;
+  const sg=document.getElementById('grp-swatch-grid');sg.innerHTML='';
+  // "No colour" resets the row to the default white background
+  const none=document.createElement('div');
+  none.className='swatch'+(!r.color?' selected':'');
+  none.title='No colour';
+  none.style.cssText='background:#fff;width:28px;height:28px;border-radius:4px;border:1px solid rgba(0,0,0,0.18);display:flex;align-items:center;justify-content:center;font-size:12px;color:rgba(0,0,0,0.4);';
+  none.textContent='∅';
+  none.addEventListener('click',()=>{commitNow();delete r.color;closeColorPop();render();});
+  sg.appendChild(none);
+  PALETTE.forEach(c=>{
+    const sw=document.createElement('div');
+    sw.className='swatch'+(c===r.color?' selected':'');
+    sw.style.cssText='background:'+c+';width:28px;height:28px;border-radius:4px;'+((c==='#EDE9E3'||c==='#E4E1DA')?'border:1px solid rgba(0,0,0,0.1);':'');
+    sw.addEventListener('click',()=>{commitNow();r.color=c;closeColorPop();render();});
+    sg.appendChild(sw);
+  });
+  const pop=document.getElementById('color-pop');
+  const rect=anchor.getBoundingClientRect();
+  pop.style.left=(rect.left-6)+'px';pop.style.top=(rect.bottom+8)+'px';
+  pop.classList.add('open');
+}
 function closeColorPop(){document.getElementById('color-pop').classList.remove('open');editingGrpId=null;}
-document.addEventListener('click',e=>{if(!e.target.closest('#color-pop')&&!e.target.classList.contains('ga-color'))closeColorPop();});
+document.addEventListener('click',e=>{if(!e.target.closest('#color-pop')&&!e.target.classList.contains('ga-color')&&!e.target.classList.contains('ra-color'))closeColorPop();});
 
 // ═══════════════════════════════════════════════════════════════════
 // MILESTONE EMOJI PICKER
@@ -1982,12 +2024,13 @@ let _saveTimer=null;
 // ═══════════════════════════════════════════════════════════════════
 // UNDO / REDO
 // ═══════════════════════════════════════════════════════════════════
-function snapState(){return JSON.stringify({groups,nextId,viewMode,startYear,startMonth,milestones,emojiLegend,rangeStart,rangeEnd});}
+function snapState(){return JSON.stringify({groups,nextId,viewMode,startYear,startMonth,milestones,emojiLegend,rangeStart,rangeEnd,blackout:[...blackoutDates]});}
 function applyState(str){
   try{const s=JSON.parse(str);
     groups=s.groups; nextId=s.nextId; viewMode=s.viewMode||'day';
     startYear=s.startYear; startMonth=s.startMonth; milestones=s.milestones||[]; emojiLegend=s.emojiLegend||{};
     rangeStart=s.rangeStart||rangeStart; rangeEnd=s.rangeEnd||rangeEnd;
+    blackoutDates=new Set(s.blackout||[]);
   }catch(err){return;}
   selectedBarId=null; selectedBarIds=new Set(); editingBarId=null; dragState=null; milestoneDragId=null; _pending=null;
   closeBarPopup(); closeColorPop();
@@ -2053,7 +2096,7 @@ document.addEventListener('keydown',e=>{
 function autoSave(){
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>{
-    try{localStorage.setItem('sc-timeline-state-v4',JSON.stringify({groups,nextId,viewMode,startYear,startMonth,milestones,emojiLegend,rangeStart,rangeEnd}));}catch(e){}
+    try{localStorage.setItem('sc-timeline-state-v4',JSON.stringify({groups,nextId,viewMode,startYear,startMonth,milestones,emojiLegend,rangeStart,rangeEnd,blackout:[...blackoutDates]}));}catch(e){}
   },800);
 }
 
@@ -3189,10 +3232,10 @@ try{document.getElementById('client-name').contentEditable=READONLY?'false':'tru
 // Restore state: embedded export > localStorage > seed data
 let _restored=false;
 if(window.__SC_STATE__){
-  try{const s=JSON.parse(window.__SC_STATE__);groups=s.groups;nextId=s.nextId;viewMode=s.viewMode||'day';startYear=s.startYear;startMonth=s.startMonth;milestones=s.milestones||[];emojiLegend=s.emojiLegend||{};rangeStart=s.rangeStart||rangeStart;rangeEnd=s.rangeEnd||rangeEnd;_restored=true;}catch(e){}
+  try{const s=JSON.parse(window.__SC_STATE__);groups=s.groups;nextId=s.nextId;viewMode=s.viewMode||'day';startYear=s.startYear;startMonth=s.startMonth;milestones=s.milestones||[];emojiLegend=s.emojiLegend||{};rangeStart=s.rangeStart||rangeStart;rangeEnd=s.rangeEnd||rangeEnd;blackoutDates=new Set(s.blackout||[]);_restored=true;}catch(e){}
 }
 if(!_restored){
-  try{const raw=localStorage.getItem('sc-timeline-state-v4');if(raw){const s=JSON.parse(raw);groups=s.groups;nextId=s.nextId;viewMode=s.viewMode||'day';startYear=s.startYear;startMonth=s.startMonth;milestones=s.milestones||[];emojiLegend=s.emojiLegend||{};rangeStart=s.rangeStart||rangeStart;rangeEnd=s.rangeEnd||rangeEnd;_restored=true;}}catch(e){}
+  try{const raw=localStorage.getItem('sc-timeline-state-v4');if(raw){const s=JSON.parse(raw);groups=s.groups;nextId=s.nextId;viewMode=s.viewMode||'day';startYear=s.startYear;startMonth=s.startMonth;milestones=s.milestones||[];emojiLegend=s.emojiLegend||{};rangeStart=s.rangeStart||rangeStart;rangeEnd=s.rangeEnd||rangeEnd;blackoutDates=new Set(s.blackout||[]);_restored=true;}}catch(e){}
 }
 if(!_restored){
   seedData();

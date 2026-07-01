@@ -1984,7 +1984,7 @@ function pasteBars(){
   if(!clipboard||!clipboard.length)return;
   commitNow();
   const ref=clipboard[0].start;
-  const base=(lastClickTime!=null)?lastClickTime:clipboard[0].end; // last-clicked date, else just after the original
+  const base=clipboard[0].end; // paste to the right — start where the copied block ends
   let lastId=null;
   clipboard.forEach(cb=>{
     const fr=findRow(cb._rowId);
@@ -1994,6 +1994,7 @@ function pasteBars(){
     const nb={id:uid(),start:ns,end:ne,color:cb.color,label:cb.label,progress:cb.progress||0};
     if(cb.emoji)nb.emoji=cb.emoji;
     row.bars.push(nb);lastId=nb.id;
+    cb.start=ns; cb.end=ne; // advance clipboard so repeated pastes cascade rightward
   });
   renderGrid();renderSidebar();commitChange();autoSave();
   if(lastId)selectBar(lastId);

@@ -312,6 +312,12 @@ body.readonly .save-status,body.pdf-capture .save-status{display:none!important;
 .bar:hover{box-shadow:0 2px 10px rgba(0,0,0,0.2);}
 .bar.selected{box-shadow:0 0 0 1.5px rgba(0,0,0,0.7),0 2px 8px rgba(0,0,0,0.15);}
 .bar.bar-done{opacity:0.45;}
+.bar-edit{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:18px;height:18px;border:none;border-radius:4px;background:rgba(255,255,255,0.92);color:rgba(0,0,0,0.7);font-size:11px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;padding:0;z-index:7;box-shadow:0 1px 3px rgba(0,0,0,0.25);}
+.bar:hover .bar-edit{display:flex;}
+.bar-edit:hover{color:var(--pp);}
+.bar-edit.on-light{background:rgba(0,0,0,0.55);color:#fff;}
+.bar-edit.on-light:hover{background:rgba(0,0,0,0.72);color:#fff;}
+body.readonly .bar-edit{display:none!important;}
 .bar:active{cursor:grabbing;}
 .bar-inner{position:absolute;inset:0;display:flex;align-items:center;overflow:hidden;}
 .bar-label{font-family:var(--body);font-size:11px;color:rgba(255,255,255,0.92);padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;pointer-events:none;}
@@ -421,6 +427,14 @@ body.readonly .bar:hover{outline:none;}
 ═══════════════════════════════════════════════════════════════════ */
 .empty-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1;}
 .empty-hint span{font-family:var(--body);font-size:13px;color:var(--t-tertiary);background:var(--white);padding:12px 22px;border:1px dashed rgba(0,0,0,0.12);border-radius:5px;}
+.empty-hint .empty-card{pointer-events:auto;background:var(--white);border:1px dashed rgba(0,0,0,0.14);border-radius:10px;padding:20px 26px;text-align:center;max-width:360px;box-shadow:0 4px 18px rgba(0,0,0,0.05);}
+.empty-card-title{font-family:var(--body);font-size:15px;font-weight:600;color:var(--t-secondary);margin-bottom:5px;}
+.empty-card-sub{font-family:var(--body);font-size:12px;color:var(--t-tertiary);line-height:1.6;margin-bottom:14px;}
+.empty-card-btns{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;}
+.empty-btn{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:9px 14px;border-radius:6px;border:1px solid rgba(0,0,0,0.14);background:var(--white);color:var(--t-secondary);cursor:pointer;transition:all .12s;}
+.empty-btn:hover{border-color:var(--pp);color:var(--pp);}
+.empty-btn.primary{background:var(--pp,#9500FF);color:#fff;border-color:var(--pp,#9500FF);}
+.empty-btn.primary:hover{opacity:0.9;color:#fff;}
 
 /* ═══════════════════════════════════════════════════════════════════
    DROP INDICATOR (phase reorder)
@@ -1421,8 +1435,20 @@ function renderGrid(){
   const total=groups.flatMap(g=>g.rows.flatMap(r=>r.bars));
   if(total.length===0&&groups.flatMap(g=>g.rows).length>0){
     const h=document.createElement('div');h.className='empty-hint';h.style.top=MH+'px';
-    h.innerHTML='<span><strong>Drag across the grid</strong> to draw a task bar<br>Click a bar to rename &middot; right-click to add a milestone &middot; hover for full edit</span>';
+    if(READONLY){
+      h.innerHTML='<span>This timeline is empty.</span>';
+    }else{
+      h.innerHTML='<div class="empty-card">'+
+        '<div class="empty-card-title">Your timeline is empty</div>'+
+        '<div class="empty-card-sub">Start it in one click — or just drag across the grid to draw a task bar.</div>'+
+        '<div class="empty-card-btns"><button class="empty-btn primary" id="empty-ai">✨ Populate with AI</button><button class="empty-btn" id="empty-add">+ Add a phase</button></div>'+
+      '</div>';
+    }
     content.appendChild(h);
+    if(!READONLY){
+      var _eai=h.querySelector('#empty-ai'); if(_eai)_eai.addEventListener('click',function(e){e.stopPropagation();openAIPopup();});
+      var _ead=h.querySelector('#empty-add'); if(_ead)_ead.addEventListener('click',function(e){e.stopPropagation();addGroup();});
+    }
   }
   renderLegend();renderStats();updateDayTotals();
   content.addEventListener('mousedown',onGridDown);
@@ -1570,6 +1596,11 @@ function renderBarEl(container,bar,rowId,bs,be,rowTop){
   const hl=document.createElement('div');hl.className='bar-handle left';el.appendChild(hl);
   const hr=document.createElement('div');hr.className='bar-handle right';el.appendChild(hr);
   if(bar.progress>0){const pf=document.createElement('div');pf.style.cssText='position:absolute;left:0;bottom:0;height:4px;width:'+Math.min(100,bar.progress)+'%;background:'+(light?'rgba(0,0,0,0.45)':'rgba(255,255,255,0.8)')+';pointer-events:none;border-radius:0 0 3px 3px;';el.appendChild(pf);}
+  // Pencil (shows on hover) → open the full editor (dates, colour, progress…)
+  const edp=document.createElement('button');edp.type='button';edp.className='bar-edit'+(light?' on-light':'');edp.title='Open full editor';edp.innerHTML='&#9998;';
+  edp.addEventListener('mousedown',ev=>ev.stopPropagation());
+  edp.addEventListener('click',ev=>{ev.stopPropagation();if(!READONLY)openBarPopup(bar.id);});
+  el.appendChild(edp);
 
   el.addEventListener('mousedown',e=>{
     if(READONLY)return;
@@ -1584,13 +1615,11 @@ function renderBarEl(container,bar,rowId,bs,be,rowTop){
     else startMove(e,bar,left);
     e.preventDefault();
   });
-  // Double-click → full edit popup (single click edits the label inline)
+  // Double-click → rename the bar inline (the hover pencil opens the full editor)
   el.addEventListener('dblclick',e=>{
     if(READONLY)return;
     e.stopPropagation();clearTimeout(_barEditTimer);
-    const lbl2=el.querySelector('.bar-label');
-    if(lbl2&&lbl2.getAttribute('contenteditable')==='true')lbl2.blur();
-    openBarPopup(bar.id);
+    enterBarEdit(bar.id);
   });
   // Right-click → add a milestone emoji in this task row, just after the bar
   el.addEventListener('contextmenu',e=>{
@@ -1806,7 +1835,7 @@ document.addEventListener('mouseup',e=>{
   }
   if(dragState.type==='move'){
     hideDropGhost();
-    if(!dragState.moved){var _cbid=dragState.barId;_pending=null;dragState=null;clearTimeout(_barEditTimer);_barEditTimer=setTimeout(function(){enterBarEdit(_cbid);},230);return;}
+    if(!dragState.moved){_pending=null;dragState=null;return;} // single click just selects (done on mousedown); double-click renames, pencil opens editor
     if(overBin){
       deleteBar(dragState.barId);
       (dragState.group||[]).forEach(g=>deleteBar(g.id));

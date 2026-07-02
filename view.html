@@ -206,6 +206,7 @@ body.readonly .sidebar-resizer{display:none;}
 .save-status{margin-left:auto;font-size:11px;letter-spacing:.03em;color:rgba(0,0,0,0.38);display:flex;align-items:center;white-space:nowrap;transition:color .2s;}
 .save-status.saving{color:#b8860b;}
 body.readonly .save-status,body.pdf-capture .save-status{display:none!important;}
+.btn-action:disabled{opacity:0.32;cursor:default;pointer-events:none;}
 .col-main{font-family:var(--body);font-size:12px;color:var(--t-primary);letter-spacing:0;}
 .col-sub{font-family:var(--mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--t-tertiary);margin-top:2px;}
 
@@ -673,7 +674,9 @@ body.readonly #btn-guide{display:none!important;}
     <button class="zoom-btn" id="btn-month">Month</button>
     <button class="zoom-btn" id="btn-quarter">Quarter</button>
   </div>
-  <span class="tz-label" style="margin-left:82px;color:var(--t-primary);">Build</span>
+  <button class="btn-action" id="btn-undo" title="Undo (Cmd/Ctrl Z)">↶ Undo</button>
+  <button class="btn-action" id="btn-redo" title="Redo (Cmd/Ctrl Shift Z)">↷ Redo</button>
+  <span class="tz-label" style="margin-left:18px;color:var(--t-primary);">Build</span>
   <button class="btn-action" id="btn-add-group">+ Phase</button>
   <button class="btn-action" id="btn-add-row">+ Task</button>
   <button class="btn-action" id="btn-milestone">◆ Milestone</button>
@@ -1037,7 +1040,7 @@ function buildColumns(){
 // ═══════════════════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════════════════
-function render(){buildColumns();renderHeader();renderSidebar();renderGrid();autoSave();if(window.updateHScroll)window.updateHScroll();}
+function render(){buildColumns();renderHeader();renderSidebar();renderGrid();autoSave();if(window.updateHScroll)window.updateHScroll();updateUndoRedo();}
 
 function renderHeader(){
   const hdr=document.getElementById('grid-header');
@@ -2041,11 +2044,12 @@ function applyState(str){
   ['day','week','month','quarter'].forEach(v=>document.getElementById('btn-'+v).classList.toggle('active',v===viewMode));
   render();
 }
-function commitNow(){undoStack.push(snapState());if(undoStack.length>200)undoStack.shift();redoStack=[];}
+function commitNow(){undoStack.push(snapState());if(undoStack.length>200)undoStack.shift();redoStack=[];updateUndoRedo();}
 function beginChange(){if(_pending===null)_pending=snapState();}
-function commitChange(){if(_pending!==null){if(_pending!==snapState()){undoStack.push(_pending);if(undoStack.length>200)undoStack.shift();redoStack=[];}_pending=null;}}
+function commitChange(){if(_pending!==null){if(_pending!==snapState()){undoStack.push(_pending);if(undoStack.length>200)undoStack.shift();redoStack=[];}_pending=null;}updateUndoRedo();}
 function undo(){if(!undoStack.length)return;redoStack.push(snapState());applyState(undoStack.pop());}
 function redo(){if(!redoStack.length)return;undoStack.push(snapState());applyState(redoStack.pop());}
+function updateUndoRedo(){var u=document.getElementById('btn-undo'),r=document.getElementById('btn-redo');if(u)u.disabled=!undoStack.length;if(r)r.disabled=!redoStack.length;}
 
 // ── COPY / CUT / PASTE time blocks ──
 function copySelectedBars(){
@@ -3138,6 +3142,8 @@ function deleteEntry(it){
   TimelineStore.remove(it.id).then(function(){libPushUndo('delete "'+(it.name||'timeline')+'"',function(){return TimelineStore.save(Object.assign({},it,{updated:Date.now()}));});loadLibList();});
 }
 document.getElementById('btn-library').addEventListener('click',openLibrary);
+document.getElementById('btn-undo').addEventListener('click',undo);
+document.getElementById('btn-redo').addEventListener('click',redo);
 document.getElementById('lib-close').addEventListener('click',closeLibrary);
 document.getElementById('lib-save-btn').addEventListener('click',saveCurrent);
 document.getElementById('lib-search').addEventListener('input',libRender);

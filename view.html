@@ -3140,10 +3140,20 @@ document.getElementById('lib-overlay').addEventListener('click',function(e){if(e
 const OB_KEY='sc-tt-onboarded-v1';
 const OB_CARDS=[
   {title:'Welcome to the<br>Timeline Tool',body:'Build a clean, visual project timeline in minutes \u2014 phases, tasks, dates and milestones \u2014 ready to share with your team or your client.'},
-  {title:'Lay out your plan',body:'Add phases and tasks down the left, then drag across the grid to draw a time bar. Drag a bar to move or re-time it, and drop a milestone on any key date.'},
+  {title:'Lay out your plan',body:'Add phases and tasks down the left, then drag across the grid to draw a time bar. Click a bar to name it, or double-click for full settings. Drag the middle to move it, drag an end to resize \u2014 the length stays fixed while you move.'},
+  {title:'Work faster',body:'Shift-click several bars to select them, then drag to move them all together. Copy, cut and paste blocks with Cmd/Ctrl + C / X / V \u2014 a paste drops just to the right of the block you copied. Undo anything with Cmd/Ctrl + Z.'},
+  {title:'Dates, holidays & colour',body:'Click a date number to highlight it down the whole timeline; Shift-click a date to black out a holiday or closed day (this saves and shows to your client). Colour a whole task row with its \u25cf button, or a phase with its colour dot.'},
   {title:'Set the date range',body:'Use Add Date Range to set the span your timeline covers \u2014 it defaults to the next twelve months. Switch Day / Week / Month / Quarter to zoom in or out.'},
-  {title:'Save to the SC library',body:'Open the Library to save a timeline to your shared team library \u2014 reopen it any time, or duplicate one as a template. Everyone signed in sees the same library.'},
-  {title:'Export for client view',body:'Use Share \u2192 Download view-only timeline. Your client gets a clean, read-only version they can open in a browser but cannot edit.'},
+  {title:'Save & share',body:'Open the Library to save to your shared team library and reopen any time. Use Share \u2192 Download view-only timeline to give a client a clean, read-only version they can open in a browser but cannot edit.'},
+  {title:'Keyboard shortcuts',html:true,body:'<div style="text-align:left;line-height:1.85;font-size:14px;max-width:440px;margin:0 auto;">'+
+    '<b>Shift-click</b> \u2014 select several bars<br>'+
+    '<b>Drag</b> the middle to move \u00b7 an <b>end</b> to resize<br>'+
+    '<b>Cmd/Ctrl&nbsp;C \u00b7 X \u00b7 V</b> \u2014 copy \u00b7 cut \u00b7 paste (to the right)<br>'+
+    '<b>Delete</b> \u2014 remove selected (or drag to the bin)<br>'+
+    '<b>Cmd/Ctrl&nbsp;Z</b> \u2014 undo \u00b7 <b>+ Shift</b> \u2014 redo<br>'+
+    '<b>Click a date</b> \u2014 highlight \u00b7 <b>Shift-click a date</b> \u2014 holiday<br>'+
+    '<b>Right-click a word</b> \u2014 spell-check corrections'+
+  '</div>'},
   {title:'Let AI do the heavy lifting',body:'Got a brief or some notes? Let AI Populate build the first draft \u2014 phases, tasks, rough dates and milestones \u2014 then fine-tune by dragging. Or jump straight in with a blank board.',final:true}
 ];
 let obIdx=0, obBuilt=false;
@@ -3165,7 +3175,7 @@ function buildOnboard(){
     const sl=document.createElement('div');sl.className='onboard-slide';
     const eb=document.createElement('div');eb.className='onboard-eyebrow';eb.textContent='STEP '+String(i+1).padStart(2,'0');
     const ti=document.createElement('div');ti.className='onboard-title';ti.innerHTML=c.title;
-    const bo=document.createElement('div');bo.className='onboard-body';bo.textContent=c.body;
+    const bo=document.createElement('div');bo.className='onboard-body';if(c.html){bo.innerHTML=c.body;}else{bo.textContent=c.body;}
     sl.appendChild(eb);sl.appendChild(ti);sl.appendChild(bo);track.appendChild(sl);
   });
   const dots=document.getElementById('ob-dots');dots.innerHTML='';
@@ -3223,7 +3233,13 @@ function closeOnboardToHub(){
   else { finishOnboard(); }
 }
 document.getElementById('onboard-overlay').addEventListener('click',function(e){ if(e.target===this) closeOnboardToHub(); });
-try{ if(!READONLY) openOnboard(); }catch(e){} // covers the tool instantly each time you enter
+// Auto-open the guide only on the first visit (per browser); the "?" button reopens it any time.
+try{
+  if(!READONLY){
+    var _seenGuide=false; try{_seenGuide=!!localStorage.getItem('sc_tt_onboarded_v1');}catch(e){}
+    if(!_seenGuide){ openOnboard(); try{localStorage.setItem('sc_tt_onboarded_v1','1');}catch(e){} }
+  }
+}catch(e){}
 
 updateDate();setupSync();
 if(READONLY)document.body.classList.add('readonly');

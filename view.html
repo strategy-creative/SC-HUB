@@ -203,6 +203,9 @@ body.readonly .sidebar-resizer{display:none;}
 .col-header.hl-col{background:rgba(255,193,7,0.28);}
 .col-header.bo-col{background:rgba(0,0,0,0.5);}
 .col-header.bo-col .col-main,.col-header.bo-col .col-sub{color:#fff;}
+.save-status{margin-left:auto;font-size:11px;letter-spacing:.03em;color:rgba(0,0,0,0.38);display:flex;align-items:center;white-space:nowrap;transition:color .2s;}
+.save-status.saving{color:#b8860b;}
+body.readonly .save-status,body.pdf-capture .save-status{display:none!important;}
 .col-main{font-family:var(--body);font-size:12px;color:var(--t-primary);letter-spacing:0;}
 .col-sub{font-family:var(--mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--t-tertiary);margin-top:2px;}
 
@@ -679,7 +682,8 @@ body.readonly #btn-guide{display:none!important;}
   <button class="btn-action" id="btn-ai-edit" title="Ask AI to change the current timeline">✦ Ask AI</button>
   <button class="btn-action" id="btn-library">▤ Library</button>
   <button class="btn-action" id="btn-guide" title="How the Timeline Tool works">?</button>
-  <div class="export-wrap" style="margin-left:auto;">
+  <span id="save-status" class="save-status" title="Auto-saved in this browser. Use Library → Save current to store it in the shared team library.">✓ Saved</span>
+  <div class="export-wrap" style="margin-left:14px;">
     <button class="btn-share" id="btn-export">Share with client ▾</button>
     <div class="export-menu" id="export-menu">
       <button class="export-item exp-client-item" id="exp-link">Get shareable client link</button>
@@ -2093,10 +2097,17 @@ document.addEventListener('keydown',e=>{
   }
 });
 
+function setSaveStatus(state){
+  var el=document.getElementById('save-status'); if(!el)return;
+  if(state==='saving'){el.className='save-status saving';el.textContent='Saving…';}
+  else{el.className='save-status';el.textContent='✓ Saved';}
+}
 function autoSave(){
+  setSaveStatus('saving');
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>{
     try{localStorage.setItem('sc-timeline-state-v4',JSON.stringify({groups,nextId,viewMode,startYear,startMonth,milestones,emojiLegend,rangeStart,rangeEnd,blackout:[...blackoutDates]}));}catch(e){}
+    setSaveStatus('saved');
   },800);
 }
 

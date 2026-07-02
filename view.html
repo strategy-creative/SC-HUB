@@ -311,6 +311,7 @@ body.readonly .save-status,body.pdf-capture .save-status{display:none!important;
 }
 .bar:hover{box-shadow:0 2px 10px rgba(0,0,0,0.2);}
 .bar.selected{box-shadow:0 0 0 1.5px rgba(0,0,0,0.7),0 2px 8px rgba(0,0,0,0.15);}
+.bar.bar-done{opacity:0.45;}
 .bar:active{cursor:grabbing;}
 .bar-inner{position:absolute;inset:0;display:flex;align-items:center;overflow:hidden;}
 .bar-label{font-family:var(--body);font-size:11px;color:rgba(255,255,255,0.92);padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;pointer-events:none;}
@@ -868,6 +869,13 @@ body.readonly #btn-guide{display:none!important;}
     <div class="field">
       <label class="field-label">Colour</label>
       <div class="swatch-grid" id="bar-swatch-grid"></div>
+    </div>
+    <div class="field">
+      <label class="field-label">Progress</label>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="range" id="bar-progress" min="0" max="100" step="5" value="0" style="flex:1;" oninput="var v=document.getElementById('bar-progress-val');if(v)v.textContent=this.value+'%';">
+        <span id="bar-progress-val" style="font-family:var(--mono);font-size:11px;min-width:36px;text-align:right;">0%</span>
+      </div>
     </div>
     <div class="popup-actions">
       <button class="btn-danger" id="btn-del-bar">Delete</button>
@@ -1546,8 +1554,9 @@ function renderMilestones(content){
 function renderBarEl(container,bar,rowId,bs,be,rowTop){
   const left=t2pxSmart(bs),width=Math.max(4,t2pxSmart(be)-left),top=rowTop+(RH-BH)/2;
   const light=isLight(bar.color||'#9500FF');
+  const _frp=findRow(rowId); const gdone=!!(_frp&&_frp.group&&_frp.group.done); // dim bars in a completed phase
   const el=document.createElement('div');
-  el.className='bar'+(selectedBarIds.has(bar.id)?' selected':'');
+  el.className='bar'+(selectedBarIds.has(bar.id)?' selected':'')+(gdone?' bar-done':'');
   el.dataset.bid=bar.id;el.dataset.rid=rowId;
   el.style.cssText='left:'+left+'px;top:'+top+'px;width:'+width+'px;height:'+BH+'px;background:'+(bar.color||'#9500FF')+';';
   const inner=document.createElement('div');inner.className='bar-inner';
@@ -1560,6 +1569,7 @@ function renderBarEl(container,bar,rowId,bs,be,rowTop){
   el.appendChild(inner);
   const hl=document.createElement('div');hl.className='bar-handle left';el.appendChild(hl);
   const hr=document.createElement('div');hr.className='bar-handle right';el.appendChild(hr);
+  if(bar.progress>0){const pf=document.createElement('div');pf.style.cssText='position:absolute;left:0;bottom:0;height:4px;width:'+Math.min(100,bar.progress)+'%;background:'+(light?'rgba(0,0,0,0.45)':'rgba(255,255,255,0.8)')+';pointer-events:none;border-radius:0 0 3px 3px;';el.appendChild(pf);}
 
   el.addEventListener('mousedown',e=>{
     if(READONLY)return;
@@ -1886,6 +1896,7 @@ function openBarPopup(barId){
   document.getElementById('bar-label').value=f.bar.label||'';
   document.getElementById('bar-start').value=fmtDate(f.bar.start);
   document.getElementById('bar-end').value=fmtDate(f.bar.end);
+  var _bp=document.getElementById('bar-progress'); if(_bp){_bp.value=f.bar.progress||0; var _bpv=document.getElementById('bar-progress-val'); if(_bpv)_bpv.textContent=(f.bar.progress||0)+'%';}
   // Colour swatches
   const sg=document.getElementById('bar-swatch-grid');sg.innerHTML='';
   PALETTE.forEach(c=>{
@@ -1916,6 +1927,7 @@ function saveBarPopup(){
   if(!isNaN(ne)&&ne>f.bar.start)f.bar.end=ne;
   const sw=document.querySelector('#bar-swatch-grid .swatch.selected');
   if(sw)f.bar.color=sw.dataset.color||sw.style.background;
+  var _bp=document.getElementById('bar-progress'); if(_bp)f.bar.progress=parseInt(_bp.value,10)||0;
   // emoji already updated reactively in openBarPopup click handlers
   closeBarPopup();renderGrid();autoSave();
 }
@@ -3162,15 +3174,6 @@ const OB_CARDS=[
   {title:'Dates, holidays & colour',body:'Click a date number to highlight it down the whole timeline; Shift-click a date to black out a holiday or closed day (this saves and shows to your client). Colour a whole task row with its \u25cf button, or a phase with its colour dot.'},
   {title:'Set the date range',body:'Use Add Date Range to set the span your timeline covers \u2014 it defaults to the next twelve months. Switch Day / Week / Month / Quarter to zoom in or out.'},
   {title:'Save & share',body:'Open the Library to save to your shared team library and reopen any time. Use Share \u2192 Download view-only timeline to give a client a clean, read-only version they can open in a browser but cannot edit.'},
-  {title:'Keyboard shortcuts',html:true,body:'<div style="text-align:left;line-height:1.85;font-size:14px;max-width:440px;margin:0 auto;">'+
-    '<b>Shift-click</b> \u2014 select several bars<br>'+
-    '<b>Drag</b> the middle to move \u00b7 an <b>end</b> to resize<br>'+
-    '<b>Cmd/Ctrl&nbsp;C \u00b7 X \u00b7 V</b> \u2014 copy \u00b7 cut \u00b7 paste (to the right)<br>'+
-    '<b>Delete</b> \u2014 remove selected (or drag to the bin)<br>'+
-    '<b>Cmd/Ctrl&nbsp;Z</b> \u2014 undo \u00b7 <b>+ Shift</b> \u2014 redo<br>'+
-    '<b>Click a date</b> \u2014 highlight \u00b7 <b>Shift-click a date</b> \u2014 holiday<br>'+
-    '<b>Right-click a word</b> \u2014 spell-check corrections'+
-  '</div>'},
   {title:'Let AI do the heavy lifting',body:'Got a brief or some notes? Let AI Populate build the first draft \u2014 phases, tasks, rough dates and milestones \u2014 then fine-tune by dragging. Or jump straight in with a blank board.',final:true}
 ];
 let obIdx=0, obBuilt=false;

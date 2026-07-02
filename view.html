@@ -203,7 +203,7 @@ body.readonly .sidebar-resizer{display:none;}
 .col-header.hl-col{background:rgba(255,193,7,0.28);}
 .col-header.bo-col{background:rgba(0,0,0,0.5);}
 .col-header.bo-col .col-main,.col-header.bo-col .col-sub{color:#fff;}
-.save-status{margin-left:auto;font-size:11px;letter-spacing:.03em;color:rgba(0,0,0,0.38);display:flex;align-items:center;white-space:nowrap;transition:color .2s;}
+.save-status{margin-left:14px;font-size:11px;letter-spacing:.03em;color:rgba(0,0,0,0.38);display:flex;align-items:center;white-space:nowrap;transition:color .2s;}
 .save-status.saving{color:#b8860b;}
 body.readonly .save-status,body.pdf-capture .save-status{display:none!important;}
 .btn-action:disabled{opacity:0.32;cursor:default;pointer-events:none;}
@@ -674,9 +674,7 @@ body.readonly #btn-guide{display:none!important;}
     <button class="zoom-btn" id="btn-month">Month</button>
     <button class="zoom-btn" id="btn-quarter">Quarter</button>
   </div>
-  <button class="btn-action" id="btn-undo" title="Undo (Cmd/Ctrl Z)">↶ Undo</button>
-  <button class="btn-action" id="btn-redo" title="Redo (Cmd/Ctrl Shift Z)">↷ Redo</button>
-  <span class="tz-label" style="margin-left:18px;color:var(--t-primary);">Build</span>
+  <span class="tz-label" style="margin-left:82px;color:var(--t-primary);">Build</span>
   <button class="btn-action" id="btn-add-group">+ Phase</button>
   <button class="btn-action" id="btn-add-row">+ Task</button>
   <button class="btn-action" id="btn-milestone">◆ Milestone</button>
@@ -685,6 +683,8 @@ body.readonly #btn-guide{display:none!important;}
   <button class="btn-action" id="btn-ai-edit" title="Ask AI to change the current timeline">✦ Ask AI</button>
   <button class="btn-action" id="btn-library">▤ Library</button>
   <button class="btn-action" id="btn-guide" title="How the Timeline Tool works">?</button>
+  <button class="btn-action" id="btn-undo" title="Undo (Cmd/Ctrl Z)" style="margin-left:auto;">↶ Undo</button>
+  <button class="btn-action" id="btn-redo" title="Redo (Cmd/Ctrl Shift Z)">↷ Redo</button>
   <span id="save-status" class="save-status" title="Auto-saved in this browser. Use Library → Save current to store it in the shared team library.">✓ Saved</span>
   <div class="export-wrap" style="margin-left:14px;">
     <button class="btn-share" id="btn-export">Share with client ▾</button>

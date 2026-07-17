@@ -1,1 +1,2 @@
-BUILD v13 — deployed 2026-07-17 15:37:42
+tl-import-fix — deployed 2026-07-17
+Timeline Tool → Proposal Builder import now renders the Gantt (direct #mainFrame target).

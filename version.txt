@@ -1,2 +1,2 @@
-tl-import-fix — deployed 2026-07-17
-Timeline Tool → Proposal Builder import now renders the Gantt (direct #mainFrame target).
+tl-import-fix-b — deployed 2026-07-17
+Timeline import now retries until the Gantt frame is ready (fixes intermittent "nothing happens").
